@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" http-equiv="Content-Type" content="text/html, charset=utf-8" />
+
+        <title>Inside</title>
+
+        <!-- Babylon.js -->
+        <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/ammo.js"></script>
+        <script src="https://preview.babylonjs.com/cannon.js"></script>
+        <script src="https://preview.babylonjs.com/Oimo.js"></script>
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/6.4.5/swiper-bundle.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/6.4.5/swiper-bundle.css">
+
+        <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+        <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+                outline: none;
+                position: absolute;
+            }
+
+            #gallery-wrapper {
+                position: block;
+                opacity: 0;
+            }
+
+            #gallery-box{
+                position: absolute;
+                width: 100vw;
+                height: 100vh;
+                z-index: 2000;
+                background-color: #000000;
+                opacity: 50%;
+                top: 50%;  /* position the top  edge of the element at the middle of the parent */
+                left: 50%; /* position the left edge of the element at the middle of the parent */
+                transform: translate(-50%, -50%); /* center */
+            }
+
+            .swiper-container {
+                position: absolute;
+                width: 60vw;
+                height: 60vh;
+                top: 50%;  /* position the top  edge of the element at the middle of the parent */
+                left: 50%; /* position the left edge of the element at the middle of the parent */
+                transform: translate(-50%, -50%); /* center */
+                z-index: 3000;
+            }
+
+                .swiper-slide {
+                text-align: center;
+                font-size: 18px;
+                background: #fff;
+
+                /* Center slide text vertically */
+                display: -webkit-box;
+                display: -ms-flexbox;
+                display: -webkit-flex;
+                display: flex;
+                -webkit-box-pack: center;
+                -ms-flex-pack: center;
+                -webkit-justify-content: center;
+                justify-content: center;
+                -webkit-box-align: center;
+                -ms-flex-align: center;
+                -webkit-align-items: center;
+                align-items: center;
+            }
+
+            #model {
+                position: absolute;
+                background-color: #fff;
+                width: 100%;
+                height: 100%;
+                top: 50%;  /* position the top  edge of the element at the middle of the parent */
+                left: 50%; /* position the left edge of the element at the middle of the parent */
+                transform: translate(-50%, -50%); /* center */
+                z-index: 3000;
+            }
+            #qr {
+                position: absolute;
+                width: 80px;
+                height: 80px;
+                top: 25px;
+                right: 20px;
+                z-index: 9999999;
+            }
+
+            #qr-text {
+                position: absolute;
+                font-family: Arial, Helvetica, sans-serif;
+                font-weight: bold;
+                font-size: 12px;
+                top: 0;
+                right: 5px;
+                z-index: 9999999;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = null;
+        var scene = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }); };
+        var createScene = function () {
+    var scene = new BABYLON.Scene(engine);
+   scene.clearColor = new BABYLON.Color3(0.3, 0.6, 0.902);
+   //scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+   //var sceneToRender = null;
+     //   scene.debugLayer.show(
+       //         {
+         //          embedMode: true, handleResize: true, enableClose: false, enablePopup: false, overlay: true
+           //     }
+            //);
+
+    var light = new BABYLON.HemisphericLight("Light", new BABYLON.Vector3(0,1,0), scene);
+    light.intensity = 0.7;
+
+    var pointlight = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(1, 1, 0), scene);
+    pointlight.intensity = 0.3
+
+    //Add the camera, to be shown as a cone and surrounding collision volume
+    var multiviewMetrics = BABYLON.VRCameraMetrics.GetDefault();
+        multiviewMetrics.multiviewEnabled = true;
+
+        // Create camera
+        var multiviewCamera = new BABYLON.VRDeviceOrientationFreeCamera("", new BABYLON.Vector3(0, 5, 0), scene, undefined, multiviewMetrics);
+        scene.activeCamera = multiviewCamera;
+        multiviewCamera.attachControl(canvas, true);
+        multiviewCamera.speed =0.8;
+
+    var material = new BABYLON.StandardMaterial(scene);
+    material.alpha = 1;
+    material.diffuseColor = new BABYLON.Color3(.2, 0.2, 0.2);
+    material.backFaceCulling = false;
+    
+    // create building
+    const box = BABYLON.MeshBuilder.CreateBox("box", {height: 20, width: 50, depth: 30});
+    box.material = material;
+    box.position.z = 0;
+    box.position.y = 0;
+    box.checkCollisions = true;
+    box.flipFaces(true);
+
+    var materialRed = new BABYLON.StandardMaterial(scene);
+    materialRed.alpha = 1;
+    materialRed.diffuseColor = new BABYLON.Color3(1,0,0);
+
+    const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameterX: 3, diameterY: 3, diameterZ: 3});
+    sphere.material = materialRed;
+    sphere.position.z = -12;
+    sphere.position.y = 1.5;
+    sphere.checkCollisions = true;
+
+    materialBlue = new BABYLON.StandardMaterial(scene);
+    materialBlue.alpha = 1;
+    materialBlue.diffuseColor = new BABYLON.Color3(0,0.7,1);
+
+    const cube = BABYLON.MeshBuilder.CreateBox("cube", {height: 3, width: 3, depth: 3});
+    cube.material = materialBlue;
+    cube.position.z = -12;
+    cube.position.y = 1.5;
+    cube.position.x = 5;
+    cube.checkCollisions = true;
+
+    //click to toggle swipe div
+    cube.actionManager = new BABYLON.ActionManager(scene);
+
+    cube.actionManager.registerAction(
+        new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
+        function(event){
+            var pickedMesh = event.meshUnderPointer; 
+
+            var x = document.getElementById("gallery-wrapper");
+
+            x.style.display = "block";
+            x.style.opacity = "100%";
+        })
+    )
+
+
+    materialYellow = new BABYLON.StandardMaterial(scene);
+    materialYellow.alpha = 1;
+    materialYellow.diffuseColor = new BABYLON.Color3(1, 1, 0);
+
+    const cylinder = BABYLON.MeshBuilder.CreateCylinder("cylinder", {height: 5, diameterTop: 3, diameterBottom: 3});
+    cylinder.material = materialYellow;
+    cylinder.position.z = -12;
+    cylinder.position.y = 1.5;
+    cylinder.position.x = -5;
+    cylinder.checkCollisions = true;
+    
+
+
+    //Dummy camera as cone
+
+    /* Set Up Scenery
+    _____________________*/
+
+    //Ground
+    var ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 1000, height: 1000}, scene);
+    ground.material = new BABYLON.StandardMaterial("groundMat", scene);
+    ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    ground.material.backFaceCulling = false;
+
+    var lowerGround = ground.clone("lowerGround");
+    lowerGround.scaling.x = 4;
+    lowerGround.scaling.z = 4;
+    lowerGround.position.y = -16;
+    lowerGround.material = ground.material.clone("lowerMat");
+    lowerGround.material.diffuseColor = new BABYLON.Color3(0, 1, 0);
+
+    /* End Create Scenery */
+
+    //Gravity and Collisions Enabled
+    scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
+    scene.collisionsEnabled = true;
+
+    multiviewCamera.checkCollisions = true;
+    multiviewCamera.applyGravity = true;
+    multiviewCamera.rotation.alpha = Math.PI;
+
+    ground.checkCollisions = true;
+    lowerGround.checkCollisions = true;
+
+    multiviewCamera.ellipsoid = new BABYLON.Vector3(3, 3, 3);
+    multiviewCamera.ellipsoidOffset = new BABYLON.Vector3(0, 1, 0);
+
+    var isLocked = false;
+    scene.onPointerDown = function (evt) {
+
+        if (document.pointerLockElement !== canvas) {
+            console.log('Was Already locked: ', document.pointerLockElement === canvas);
+
+            if (!isLocked) {
+                canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock || false;
+                if (canvas.requestPointerLock) {
+                    canvas.requestPointerLock();
+                }
+            }
+        }
+    }
+
+    //Create Visible Ellipsoid around camera
+
+    // GUI
+    var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        
+        var button = BABYLON.GUI.Button.CreateImageOnlyButton("but", "https://cdn.glitch.com/70dbad3b-1f56-4b3f-96b7-05e0de0f2754%2Fsettings2.png?v=1606013986315");
+        button.width = "30px";
+        button.height = "30px";
+        button.color = "transparent";
+        button.image.detectPointerOnOpaqueOnly = true;
+        button.children[0].detectPointerOnOpaqueOnly = true;
+        button.top = "-440px"
+        button.left = "810px"
+        //button.background = "rgba(0.5, 0.5, 0.5, 0.6)";
+        //button.alpha = 0;
+        advancedTexture.addControl(button);
+        button.onPointerDownObservable.add(function() {
+            window.location.href = "/a-frame.html";
+    });
+
+    return scene;
+}
+    var engine;
+    try {
+    engine = createDefaultEngine();
+    } catch(e) {
+    console.log("the available createEngine function failed. Creating the default engine instead");
+    engine = createDefaultEngine();
+    }
+        if (!engine) throw 'engine should not be null.';
+        scene = createScene();;
+        sceneToRender = scene
+
+        engine.runRenderLoop(function () {
+            if (sceneToRender && sceneToRender.activeCamera) {
+                sceneToRender.render();
+            }
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+       
+</body>
+</html>
