@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Market</title>
+
+        <!-- Babylon.js -->
+        <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://cdn.babylonjs.com/ammo.js"></script>
+        <script src="https://cdn.babylonjs.com/cannon.js"></script>
+        <script src="https://cdn.babylonjs.com/Oimo.js"></script>
+        <script src="https://cdn.babylonjs.com/earcut.min.js"></script>
+        <script src="https://cdn.babylonjs.com/babylon.js"></script>
+        <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://cdn.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://cdn.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://cdn.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://cdn.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+        
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+                outline: none;
+                z-index: 0;
+                position: absolute;
+                z-index: 1
+            }
+
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }); };
+        var createScene = function () {
+    var scene = new BABYLON.Scene(engine);
+    //scene.debugLayer.show(
+      //          {
+        //           embedMode: true, handleResize: true, enableClose: false, enablePopup: false, overlay: true
+          //      }
+            //);
+    scene.clearColor = new BABYLON.Color3(0.3, 0.6, 0.902);
+
+    var light = new BABYLON.HemisphericLight("Light", new BABYLON.Vector3(0,1,0), scene);
+    light.intensity = 0.7;
+
+    scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
+    scene.fogDensity = 0.00013;
+    scene.fogColor = new BABYLON.Color3(0.9, 0.9, 0.85);
+
+    //Add the camera, to be shown as a cone and surrounding collision volume
+    var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(0, 5, 140), scene);
+    camera.minZ = 0.01;
+
+    camera.attachControl(canvas, true);
+    camera.speed = 0.05;
+    camera.angularSpeed = 0.03;
+    camera.angle = Math.PI/2;
+    camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
+
+    var nullObj = new BABYLON.TransformNode("master");
+
+    BABYLON.SceneLoader.Append("https://cdn.glitch.com/70dbad3b-1f56-4b3f-96b7-05e0de0f2754%2Fstore-box2.glb?v=1610831567238", "Store.glb", scene, function (scene) {
+        var root = scene.getNodeByName('__root__');
+        root.name = "build";
+        root.parent = nullObj;
+    });
+
+    var zvalue = 0;
+    var zvalue2 = 0;
+    scene.executeWhenReady(function () {
+                var root = scene.getNodeByName("build");
+                var building = scene.getMeshByName("store.box_primitive0");
+                var name = scene.getMeshByName("store.box_primitive1");
+                building.checkCollisions = true;
+                building.scaling = new BABYLON.Vector3(16,16,16);
+                name.scaling = new BABYLON.Vector3(16,16,16);
+                root.position = new BABYLON.Vector3(55,8,zvalue);
+                building.rotation.y = 1.571;
+                name.rotation.y = 1.571;
+                root.parent = nullObj;
+
+                var buildings = [root];
+                for (var i = 1; i < 5; i++) {
+                    var newBuildingL = root.clone("root" + i);
+                    var newBuildingR = root.clone("root" + i);
+                    newBuildingR.rotation = new BABYLON.Vector3(0,0,0);
+
+                    buildings.push(newBuildingL);
+                    buildings.push(newBuildingR);
+
+                    newBuildingL.position = new BABYLON.Vector3(55,8,zvalue-=30);
+                    newBuildingR.position = new BABYLON.Vector3(-55,8,zvalue2-=30);
+                }
+                var buildingOneR = root.clone("root" + i);
+                buildingOneR.rotation = new BABYLON.Vector3(0,0,0);
+                buildings.push(buildingOneR);
+                buildingOneR.position = new BABYLON.Vector3(-55,8,0);
+
+
+                //var buildings2 = [root];
+                zvalue3 = -160;
+                zvalue4 = -160;
+                for (var i = 1; i < 5; i++) {
+                    var newBuildingL = root.clone("root" + i);
+                    var newBuildingR = root.clone("root" + i);
+                    newBuildingR.rotation = new BABYLON.Vector3(0,0,0);
+
+                    buildings.push(newBuildingL);
+                    buildings.push(newBuildingR);
+
+                    newBuildingL.position = new BABYLON.Vector3(55,8,zvalue3-=30);
+                    newBuildingR.position = new BABYLON.Vector3(-55,8,zvalue4-=30);
+                }
+
+                //var buildingsR = [root];
+                xvalue = -55;
+                xvalue2 = 55;
+                xvalue3 = -55;
+                xvalue4 = 55
+                for (var i = 1; i < 5; i++) {
+                    var newBuildingL = root.clone("root" + i);
+                    var newBuildingR = root.clone("root" + i);
+                    var newBuildingRO = root.clone("root" + i);
+                    var newBuildingLO = root.clone("root" + i);
+                    newBuildingL.rotation = new BABYLON.Vector3(0,1.571,0);
+                    newBuildingR.rotation = new BABYLON.Vector3(0,1.571,0);
+                    newBuildingLO.rotation = new BABYLON.Vector3(0,-1.571,0);
+                    newBuildingRO.rotation = new BABYLON.Vector3(0,-1.571,0);
+
+                    buildings.push(newBuildingL);
+                    buildings.push(newBuildingR);
+                    buildings.push(newBuildingLO);
+                    buildings.push(newBuildingRO);
+
+                    newBuildingR.position = new BABYLON.Vector3(xvalue-=30,8,-118.83);
+                    newBuildingL.position = new BABYLON.Vector3(xvalue2+=30,8,-118.83);
+                    newBuildingRO.position = new BABYLON.Vector3(xvalue3-=30,8,-191.2);
+                    newBuildingLO.position = new BABYLON.Vector3(xvalue4+=30,8,-191.2);
+                }
+            var blocks = [nullObj];
+            var block2 = nullObj.clone("master2");
+            var block3 = nullObj.clone("master3");
+            var block4 = nullObj.clone("master3");
+            block2.position = new BABYLON.Vector3(0,0, -500);
+            block3.position = new BABYLON.Vector3(0,0, -1000);
+            block4.position = new BABYLON.Vector3(0,0, -1500);
+            blocks.push(block2);
+            blocks.push(block3);
+            blocks.push(block4);
+                var side2 = scene.getMeshByName("collidePlane");
+                var side1 = scene.getMeshByName("collide");
+
+                camera.onCollide = function(collidedMesh) {
+                if(collidedMesh.uniqueId === side2.uniqueId && collisionDetected == false) {
+                    //set the new camera position
+                    collisionDetected = true;
+                    console.log("touched");
+                    camera.position.z = 24;
+                    //nullObj.position = new BABYLON.Vector3(0,0, -500);
+                    //block2.position = new BABYLON.Vector3(0,0, 0);
+                    //side2.position.z = -560;
+                    //side1.position.z = 440;
+                }
+                else{
+                    collisionDetected = false;
+                }
+            }
+            });
+
+
+            var zHuman1 = 440;
+            var zHuman2 = 470;
+            var zHuman3 = 250;
+            for(var i = 0; i<4; i++){
+                BABYLON.SceneLoader.Append("https://cdn.glitch.com/70dbad3b-1f56-4b3f-96b7-05e0de0f2754%2Fman-phone2.glb?v=1610869258964", "", scene, function (scene) {
+                    var root = scene.getNodeByName('__root__');
+                    root.name = "man" + i;
+                    var man1 = scene.getNodeByName("Armature.003");
+                    man1.name = "man1node" + i;
+                    var man1mesh = scene.getMeshByName("BASE_Low Poly Man_0.001");
+                    man1mesh.name = "man1mesh" + i;
+                    man1mesh.alwaysSelectAsActiveMesh = true;
+                    man1.position = new BABYLON.Vector3(-30,0.5,zHuman1-=500);
+                    man1.scaling = new BABYLON.Vector3(.018, .018, .018);
+                    //root.parent = nullObj;
+                });
+                BABYLON.SceneLoader.Append("https://cdn.glitch.com/70dbad3b-1f56-4b3f-96b7-05e0de0f2754%2Fwoman-phone3.glb?v=1610871559039", "", scene, function (scene) {
+                    var root = scene.getNodeByName('__root__');
+                    root.name = "woman" + i;
+                    //root.parent = nullObj;
+                    var woman1 = scene.getNodeByName("Armature.004");
+                    woman1.name = "woman1node" + i;
+                    var woman1mesh = scene.getMeshByName("Cube");
+                    woman1mesh.name = "woman1mesh";
+                    woman1mesh.alwaysSelectAsActiveMesh = true;
+                    woman1.position = new BABYLON.Vector3(30,.6,zHuman2-=500);
+                    woman1.scaling = new BABYLON.Vector3(3, 3, 3);
+                });
+                BABYLON.SceneLoader.Append("https://cdn.glitch.com/70dbad3b-1f56-4b3f-96b7-05e0de0f2754%2Fwoman-idle.glb?v=1610873146006", "", scene, function (scene) {
+                    var root = scene.getNodeByName('__root__');
+                    root.name = "woman2" + i;
+                    //root.parent = nullObj;
+                    var woman2 = scene.getNodeByName("Armature");
+                    woman2.name = "woman2node" + i;
+                    var woman2mesh = scene.getMeshByName("Cube.001");
+                    woman2mesh.name = "woman1mesh" + i;
+                    woman2mesh.alwaysSelectAsActiveMesh = true;
+                    woman2.rotation = new BABYLON.Vector3(1.55,1.5,0);
+                    woman2.position = new BABYLON.Vector3(-30,.5,zHuman3-=500);
+                    woman2.scaling = new BABYLON.Vector3(3, 3, 3);
+                });
+            }
+
+    
+    camera.rotation.y += Math.PI;
+
+
+    /* Set Up Scenery
+    _____________________*/
+
+    //Ground
+    var ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 10000, height: 10000}, scene);
+    ground.material = new BABYLON.StandardMaterial("groundMat", scene);
+    ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    ground.material.backFaceCulling = false;
+
+    var lowerGround = ground.clone("lowerGround");
+    lowerGround.scaling.x = 4;
+    lowerGround.scaling.z = 4;
+    lowerGround.position.y = -16;
+    lowerGround.material = ground.material.clone("lowerMat");
+    lowerGround.material.diffuseColor = new BABYLON.Color3(0, 1, 0);
+
+    var sidewalk1 = BABYLON.MeshBuilder.CreateBox("collide", {height: .2, width: 150, depth: 170});
+    sidewalk1.position = new BABYLON.Vector3(100,.5,-60);
+    sidewalk1.material = new BABYLON.StandardMaterial("sidewalk", scene);
+    sidewalk1.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    sidewalk1.checkCollisions = true;
+
+    var block2plane = BABYLON.MeshBuilder.CreateBox("collidePlane", {height: .000001, width: 300, depth: 170});
+    block2plane.position = new BABYLON.Vector3(0,0,-560);
+    block2plane.material = sidewalk1.material;
+    block2plane.checkCollisions = true;
+    
+    var sidewalk2 = BABYLON.MeshBuilder.CreateBox("box", {height: .2, width: 150, depth: 170});
+    sidewalk2.position = new BABYLON.Vector3(-100,.5,-60);
+    sidewalk2.material = sidewalk1.material;
+    sidewalk2.checkCollisions = true;
+
+    var sidewalk3 = BABYLON.MeshBuilder.CreateBox("box", {height: .2, width: 150, depth: 170});
+    sidewalk3.position = new BABYLON.Vector3(100,.5,-250);
+    sidewalk3.material = sidewalk1.material;
+    sidewalk3.checkCollisions = true;
+
+    var sidewalk4 = BABYLON.MeshBuilder.CreateBox("box", {height: .2, width: 150, depth: 170});
+    sidewalk4.position = new BABYLON.Vector3(-100,.5,-250);
+    sidewalk4.material = sidewalk1.material
+    sidewalk4.checkCollisions = true;
+
+    sidewalk1.parent = nullObj;
+    sidewalk2.parent = nullObj;
+    sidewalk3.parent = nullObj;
+    sidewalk4.parent = nullObj;
+    /* End Create Scenery */
+
+    //Gravity and Collisions Enabled
+    scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
+    scene.collisionsEnabled = true;
+
+    camera.checkCollisions = true;
+    camera.applyGravity = true;
+
+    ground.checkCollisions = true;
+    lowerGround.checkCollisions = true;
+
+    camera.ellipsoid = new BABYLON.Vector3(0.5, 3, 0.5);
+    camera.ellipsoidOffset = new BABYLON.Vector3(0, 1, 0);
+
+
+
+    // GUI
+    var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        
+        var button = BABYLON.GUI.Button.CreateImageOnlyButton("but", "https://cdn.glitch.com/70dbad3b-1f56-4b3f-96b7-05e0de0f2754%2Fsettings2.png?v=1606013986315");
+        button.width = "30px";
+        button.height = "30px";
+        button.color = "transparent";
+        button.image.detectPointerOnOpaqueOnly = true;
+        button.children[0].detectPointerOnOpaqueOnly = true;
+        button.top = "-440px"
+        button.left = "810px"
+        //button.background = "rgba(0.5, 0.5, 0.5, 0.6)";
+        //button.alpha = 0;
+        button.rotation.y = -180;
+        advancedTexture.addControl(button);
+        button.onPointerDownObservable.add(function() {
+            window.location.href = "/a-frame.html";
+        });
+
+        var search = BABYLON.GUI.Button.CreateImageOnlyButton("but", "search-icon.png");
+        search.width = "30px";
+        search.height = "35px";
+        search.color = "transparent";
+        search.image.detectPointerOnOpaqueOnly = true;
+        search.children[0].detectPointerOnOpaqueOnly = true;
+        search.top = "-438px"
+        search.left = "760px"
+        //button.background = "rgba(0.5, 0.5, 0.5, 0.6)";
+        //button.alpha = 0;
+        search.rotation.y = -180;
+        advancedTexture.addControl(search);
+        
+
+    // Create the 3D UI manager
+    var manager = new BABYLON.GUI.GUI3DManager(scene);
+    var anchor = new BABYLON.AbstractMesh("anchor", scene);
+    anchor.parent = nullObj;
+    anchor.position.z = 0;
+    // add 3d buttons
+    var z = 30;
+    var z2 = 30;
+    var buttons = [];
+    for(var i = 0; i<5; i++) {
+        var newButton1 = new BABYLON.GUI.HolographicButton("enter" + i);
+        var newButton2 = new BABYLON.GUI.HolographicButton("enter" + i);
+        buttons.push(newButton1);
+        buttons.push(newButton2);
+        manager.addControl(newButton1);
+        manager.addControl(newButton2);
+        newButton1.linkToTransformNode(anchor);
+        newButton2.linkToTransformNode(anchor);
+        newButton1.position = new BABYLON.Vector3(43, 5, z-=30);
+        newButton2.position = new BABYLON.Vector3(-43, 5, z2-=30);
+        newButton1.node.rotation.y = 1.5;
+        newButton2.node.rotation.y = -1.5;
+
+        newButton1.text = "ENTER";
+        //button.imageUrl = "./textures/down.png";
+        newButton1.onPointerUpObservable.add(function(){
+            window.location.href = "/video.html";
+        });
+        newButton2.text = "ENTER";
+        //button.imageUrl = "./textures/down.png";
+        newButton2.onPointerUpObservable.add(function(){
+            window.location.href = "/video.html";
+        });
+        
+    }
+
+
+    
+
+    /* New Input Management for Camera
+    __________________________________*/
+
+    //First remove the default management.
+    camera.inputs.removeByType("FreeCameraKeyboardMoveInput");
+    camera.inputs.removeByType("FreeCameraMouseInput");
+
+    //Key Input Manager To Use Keys to Move Forward and BackWard and Look to the Left or Right
+    var FreeCameraKeyboardWalkInput = function () {
+        this._keys = [];
+        this.keysUp = [38];
+        this.keysDown = [40];
+        this.keysLeft = [37];
+        this.keysRight = [39];
+        this.keysSpace = [32];
+    }
+
+    //Add attachment controls
+    FreeCameraKeyboardWalkInput.prototype.attachControl = function (noPreventDefault) {
+            var _this = this;
+            var engine = this.camera.getEngine();
+            var element = engine.getInputElement();
+            if (!this._onKeyDown) {
+                element.tabIndex = 1;
+                this._onKeyDown = function (evt) {
+                    if (_this.keysUp.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysDown.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysLeft.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysRight.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysSpace.indexOf(evt.keyCode) !== -1 ) {
+                        var index = _this._keys.indexOf(evt.keyCode);
+                        if (index === -1) {
+                            _this._keys.push(evt.keyCode);
+                        }
+                        if (!noPreventDefault) {
+                            evt.preventDefault();
+                        }
+                    }
+                };
+                this._onKeyUp = function (evt) {
+                    if (_this.keysUp.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysDown.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysLeft.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysRight.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysSpace.indexOf(evt.keyCode) !== -1 ) {
+                        var index = _this._keys.indexOf(evt.keyCode);
+                        if (index >= 0) {
+                            _this._keys.splice(index, 1);
+                        }
+                        if (!noPreventDefault) {
+                            evt.preventDefault();
+                        }
+                    }
+                };
+                element.addEventListener("keydown", this._onKeyDown, false);
+                element.addEventListener("keyup", this._onKeyUp, false);
+            }
+        };
+
+
+        //Add detachment controls
+        FreeCameraKeyboardWalkInput.prototype.detachControl = function () {
+            var engine = this.camera.getEngine();
+            var element = engine.getInputElement();
+            if (this._onKeyDown) {
+                element.removeEventListener("keydown", this._onKeyDown);
+                element.removeEventListener("keyup", this._onKeyUp);
+                BABYLON.Tools.UnregisterTopRootEvents([
+                    { name: "blur", handler: this._onLostFocus }
+                ]);
+                this._keys = [];
+                this._onKeyDown = null;
+                this._onKeyUp = null;
+            }
+        };
+
+        //Keys movement control by checking inputs
+        FreeCameraKeyboardWalkInput.prototype.checkInputs = function () {
+            if (this._onKeyDown) {
+                var camera = this.camera;
+                for (var index = 0; index < this._keys.length; index++) {
+                    var keyCode = this._keys[index];
+                    var speed = camera.speed;
+                    if (this.keysLeft.indexOf(keyCode) !== -1) {
+                        camera.rotation.y -= camera.angularSpeed;
+                        camera.direction.copyFromFloats(0, 0, 0);
+                    }
+                    else if (this.keysUp.indexOf(keyCode) !== -1) {
+                        camera.direction.copyFromFloats(0, 0, speed);
+                    }
+                    else if (this.keysRight.indexOf(keyCode) !== -1) {
+                        camera.rotation.y += camera.angularSpeed;
+                        camera.direction.copyFromFloats(0, 0, 0);
+                    }
+                    else if (this.keysDown.indexOf(keyCode) !== -1) {
+                        camera.direction.copyFromFloats(0, 0, -speed);
+                    } else if (this.keysSpace.indexOf(keyCode) !== -1) {
+                        camera.position.y += 1;
+                        camera.direction.copyFromFloats(0, 0, 0);
+                    }
+                    if (camera.getScene().useRightHandedSystem) {
+                        camera.direction.z *= -1;
+                    }
+                    camera.getViewMatrix().invertToRef(camera._cameraTransformMatrix);
+                    BABYLON.Vector3.TransformNormalToRef(camera.direction, camera._cameraTransformMatrix, camera._transformedDirection);
+                    camera.cameraDirection.addInPlace(camera._transformedDirection);
+                }
+            }
+        };
+
+        //Add the onLostFocus function
+        FreeCameraKeyboardWalkInput.prototype._onLostFocus = function (e) {
+            this._keys = [];
+        };
+
+        //Add the two required functions for the control Name
+        FreeCameraKeyboardWalkInput.prototype.getClassName = function () {
+            return "FreeCameraKeyboardWalkInput";
+        };
+
+        FreeCameraKeyboardWalkInput.prototype.getSimpleName = function () {
+            return "keyboard";
+        };
+
+    //Add the new keys input manager to the camera.
+     camera.inputs.add(new FreeCameraKeyboardWalkInput());
+
+
+
+    //The Mouse Manager to use the mouse (touch) to search around including above and below
+    var FreeCameraSearchInput = function (touchEnabled) {
+        if (touchEnabled === void 0) { touchEnabled = true; }
+        this.touchEnabled = touchEnabled;
+        this.buttons = [0, 1, 2];
+        this.angularSensibility = 2000.0;
+        this.restrictionX = 100;
+        this.restrictionY = 60;
+    }
+
+    //add attachment control which also contains the code to react to the input from the mouse
+    FreeCameraSearchInput.prototype.attachControl = function (noPreventDefault) {
+        var _this = this;
+        var engine = this.camera.getEngine();
+        var element = engine.getInputElement();
+        var angle = {x:0, y:0};
+        if (!this._pointerInput) {
+            this._pointerInput = function (p, s) {
+                var evt = p.event;
+                if (!_this.touchEnabled && evt.pointerType === "touch") {
+                    return;
+                }
+                if (p.type !== BABYLON.PointerEventTypes.POINTERMOVE && _this.buttons.indexOf(evt.button) === -1) {
+                    return;
+                }
+                if (p.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                    try {
+                        evt.srcElement.setPointerCapture(evt.pointerId);
+                    }
+                    catch (e) {
+                        //Nothing to do with the error. Execution will continue.
+                    }
+                    _this.previousPosition = {
+                        x: evt.clientX,
+                        y: evt.clientY
+                    };
+                    if (!noPreventDefault) {
+                        evt.preventDefault();
+                        element.focus();
+                    }
+                }
+                else if (p.type === BABYLON.PointerEventTypes.POINTERUP) {
+                    try {
+                        evt.srcElement.releasePointerCapture(evt.pointerId);
+                    }
+                    catch (e) {
+                        //Nothing to do with the error.
+                    }
+                    _this.previousPosition = null;
+                    if (!noPreventDefault) {
+                        evt.preventDefault();
+                    }
+                }
+                else if (p.type === BABYLON.PointerEventTypes.POINTERMOVE) {
+                    if (!_this.previousPosition || engine.isPointerLock) {
+                        return;
+                    }
+                    var offsetX = evt.clientX - _this.previousPosition.x;
+                    var offsetY = evt.clientY - _this.previousPosition.y;
+                    angle.x +=offsetX;
+                    angle.y -=offsetY;
+                    if(Math.abs(angle.x) > _this.restrictionX )  {
+                        angle.x -=offsetX;
+                    }
+                    if(Math.abs(angle.y) > _this.restrictionY )  {
+                        angle.y +=offsetY;
+                    }
+                    if (_this.camera.getScene().useRightHandedSystem) {
+                        if(Math.abs(angle.x) < _this.restrictionX )  {
+                            _this.camera.cameraRotation.y -= offsetX / _this.angularSensibility;
+                        }
+                    }
+                    else {
+                        if(Math.abs(angle.x) < _this.restrictionX )  {
+                            _this.camera.cameraRotation.y += offsetX / _this.angularSensibility;
+                        }
+                    }
+                    if(Math.abs(angle.y) < _this.restrictionY )  {
+                        _this.camera.cameraRotation.x += offsetY / _this.angularSensibility;
+                    }
+                    _this.previousPosition = {
+                        x: evt.clientX,
+                        y: evt.clientY
+                    };
+                    if (!noPreventDefault) {
+                        evt.preventDefault();
+                    }
+                }
+            };
+        }
+        this._onSearchMove = function (evt) {
+            if (!engine.isPointerLock) {
+                return;
+            }
+            var offsetX = evt.movementX || evt.mozMovementX || evt.webkitMovementX || evt.msMovementX || 0;
+            var offsetY = evt.movementY || evt.mozMovementY || evt.webkitMovementY || evt.msMovementY || 0;
+            if (_this.camera.getScene().useRightHandedSystem) {
+                _this.camera.cameraRotation.y -= offsetX / _this.angularSensibility;
+            }
+            else {
+                _this.camera.cameraRotation.y += offsetX / _this.angularSensibility;
+            }
+            _this.camera.cameraRotation.x += offsetY / _this.angularSensibility;
+            _this.previousPosition = null;
+            if (!noPreventDefault) {
+                evt.preventDefault();
+            }
+        };
+        this._observer = this.camera.getScene().onPointerObservable.add(this._pointerInput, BABYLON.PointerEventTypes.POINTERDOWN | BABYLON.PointerEventTypes.POINTERUP | BABYLON.PointerEventTypes.POINTERMOVE);
+        element.addEventListener("mousemove", this._onSearchMove, false);
+    };
+
+    //Add detachment control
+    FreeCameraSearchInput.prototype.detachControl = function () {
+        var engine = this.camera.getEngine();
+        var element = engine.getInputElement();
+        if (this._observer && element) {
+            this.camera.getScene().onPointerObservable.remove(this._observer);
+            element.removeEventListener("mousemove", this._onSearchMove);
+            this._observer = null;
+            this._onSearchMove = null;
+            this.previousPosition = null;
+        }
+    };
+
+    //Add the two required functions for names
+    FreeCameraSearchInput.prototype.getClassName = function () {
+        return "FreeCameraSearchInput";
+    };
+
+    FreeCameraSearchInput.prototype.getSimpleName = function () {
+        return "MouseSearchCamera";
+    };
+
+    //Add the new mouse input manager to the camera
+    camera.inputs.add(new FreeCameraSearchInput());
+
+
+
+    return scene;
+}
+    var engine;
+    try {
+    engine = createDefaultEngine();
+    } catch(e) {
+    console.log("the available createEngine function failed. Creating the default engine instead");
+    engine = createDefaultEngine();
+    }
+        if (!engine) throw 'engine should not be null.';
+        scene = createScene();;
+        sceneToRender = scene
+
+        engine.runRenderLoop(function () {
+            if (sceneToRender && sceneToRender.activeCamera) {
+                sceneToRender.render();
+            }
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+
+</body>
+</html>
