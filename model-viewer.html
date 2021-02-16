@@ -1,1 +1,28 @@
+<!DOCTYPE html>
 
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="">
+
+        <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+        <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+        <style>
+            #model{
+                position: fixed;
+                width: 100vw;
+                height: 85vh;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            <model-viewer id="model" src="/cube-test.gltf" ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" camera-controls alt="test" ios-src="/cube-test.usdz"></model-viewer>
+        </div>
+    
+    </body>
+</html>
