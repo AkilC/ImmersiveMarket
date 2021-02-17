@@ -54,11 +54,14 @@
         var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }); };
         var createScene = function () {
     var scene = new BABYLON.Scene(engine);
+    // uncomment below for debug layer
     //scene.debugLayer.show(
       //          {
         //           embedMode: true, handleResize: true, enableClose: false, enablePopup: false, overlay: true
           //      }
             //);
+            
+    //background color
     scene.clearColor = new BABYLON.Color3(0.3, 0.6, 0.902);
 
     var light = new BABYLON.HemisphericLight("Light", new BABYLON.Vector3(0,1,0), scene);
@@ -68,7 +71,7 @@
     scene.fogDensity = 0.00013;
     scene.fogColor = new BABYLON.Color3(0.9, 0.9, 0.85);
 
-    //Add the camera, to be shown as a cone and surrounding collision volume
+    //camera setup
     var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(0, 5, 140), scene);
     camera.minZ = 0.01;
 
@@ -78,8 +81,11 @@
     camera.angle = Math.PI/2;
     camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
 
+            
+    //create null master node to add buildings into
     var nullObj = new BABYLON.TransformNode("master");
 
+    //Add first building
     BABYLON.SceneLoader.Append("https://cdn.glitch.com/70dbad3b-1f56-4b3f-96b7-05e0de0f2754%2Fstore-box2.glb?v=1610831567238", "Store.glb", scene, function (scene) {
         var root = scene.getNodeByName('__root__');
         root.name = "build";
@@ -101,6 +107,8 @@
                 root.parent = nullObj;
 
                 var buildings = [root];
+                
+                //duplicate buildings
                 for (var i = 1; i < 5; i++) {
                     var newBuildingL = root.clone("root" + i);
                     var newBuildingR = root.clone("root" + i);
@@ -158,16 +166,17 @@
                     newBuildingRO.position = new BABYLON.Vector3(xvalue3-=30,8,-191.2);
                     newBuildingLO.position = new BABYLON.Vector3(xvalue4+=30,8,-191.2);
                 }
-            var blocks = [nullObj];
-            var block2 = nullObj.clone("master2");
-            var block3 = nullObj.clone("master3");
-            var block4 = nullObj.clone("master3");
-            block2.position = new BABYLON.Vector3(0,0, -500);
-            block3.position = new BABYLON.Vector3(0,0, -1000);
-            block4.position = new BABYLON.Vector3(0,0, -1500);
-            blocks.push(block2);
-            blocks.push(block3);
-            blocks.push(block4);
+        
+                var blocks = [nullObj];
+                var block2 = nullObj.clone("master2");
+                var block3 = nullObj.clone("master3");
+                var block4 = nullObj.clone("master3");
+                block2.position = new BABYLON.Vector3(0,0, -500);
+                block3.position = new BABYLON.Vector3(0,0, -1000);
+                block4.position = new BABYLON.Vector3(0,0, -1500);
+                blocks.push(block2);
+                blocks.push(block3);
+                blocks.push(block4);
                 var side2 = scene.getMeshByName("collidePlane");
                 var side1 = scene.getMeshByName("collide");
 
@@ -189,6 +198,7 @@
             });
 
 
+            //add human simulations
             var zHuman1 = 440;
             var zHuman2 = 470;
             var zHuman3 = 250;
@@ -252,6 +262,7 @@
     lowerGround.material = ground.material.clone("lowerMat");
     lowerGround.material.diffuseColor = new BABYLON.Color3(0, 1, 0);
 
+    //sidewalk
     var sidewalk1 = BABYLON.MeshBuilder.CreateBox("collide", {height: .2, width: 150, depth: 170});
     sidewalk1.position = new BABYLON.Vector3(100,.5,-60);
     sidewalk1.material = new BABYLON.StandardMaterial("sidewalk", scene);
@@ -332,7 +343,7 @@
         advancedTexture.addControl(search);
         
 
-    // Create the 3D UI manager
+    // Create the 3D UI manager for door enter buttons
     var manager = new BABYLON.GUI.GUI3DManager(scene);
     var anchor = new BABYLON.AbstractMesh("anchor", scene);
     anchor.parent = nullObj;
@@ -371,9 +382,10 @@
 
     
 
-    /* New Input Management for Camera
+    /* New Input Management for Camera 
     __________________________________*/
-
+    
+    //Preset for custom controls. Found from this playground https://playground.babylonjs.com/#CTCSWQ#1
     //First remove the default management.
     camera.inputs.removeByType("FreeCameraKeyboardMoveInput");
     camera.inputs.removeByType("FreeCameraMouseInput");
