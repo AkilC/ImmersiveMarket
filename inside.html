@@ -133,8 +133,8 @@
         var createScene = function () {
     var scene = new BABYLON.Scene(engine);
 
+   //background color         
    scene.clearColor = new BABYLON.Color3(0.3, 0.6, 0.902);
-   //scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
 
     var light = new BABYLON.HemisphericLight("Light", new BABYLON.Vector3(0,1,0), scene);
     light.intensity = 0.7;
@@ -248,9 +248,6 @@
     camera.ellipsoid = new BABYLON.Vector3(0.5, 3, 0.5);
     camera.ellipsoidOffset = new BABYLON.Vector3(0, 1, 0);
     
-
-    //Create Visible Ellipsoid around camera
-
     // GUI
     var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
         
@@ -271,6 +268,8 @@
 
     /* New Input Management for Camera
     __________________________________*/
+    
+    // From https://playground.babylonjs.com/#CTCSWQ#1
 
     //First remove the default management.
     camera.inputs.removeByType("FreeCameraKeyboardMoveInput");
@@ -562,6 +561,7 @@
         });
     </script>
         <!-- swiper -->
+        <!-- Box View -->
 
 
         
