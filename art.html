@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" http-equiv="Content-Type" content="text/html, charset=utf-8" />
+
+        <title>Inside</title>
+
+        <!-- Babylon.js -->
+        <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://cdn.babylonjs.com/ammo.js"></script>
+        <script src="https://cdn.babylonjs.com/cannon.js"></script>
+        <script src="https://cdn.babylonjs.com/Oimo.js"></script>
+        <script src="https://cdn.babylonjs.com/earcut.min.js"></script>
+        <script src="https://cdn.babylonjs.com/babylon.js"></script>
+        <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://cdn.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://cdn.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://cdn.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://cdn.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/6.4.5/swiper-bundle.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/6.4.5/swiper-bundle.css">
+
+        <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+        <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+                outline: none;
+                position: absolute;
+            }
+
+            #gallery-wrapper {
+                position: block;
+                opacity: 0;
+            }
+
+            #gallery-box{
+                position: absolute;
+                width: 100vw;
+                height: 100vh;
+                z-index: 2000;
+                background-color: #000000;
+                opacity: 50%;
+                top: 50%;  /* position the top  edge of the element at the middle of the parent */
+                left: 50%; /* position the left edge of the element at the middle of the parent */
+                transform: translate(-50%, -50%); /* center */
+            }
+
+            .swiper-container {
+                position: absolute;
+                width: 60vw;
+                height: 60vh;
+                top: 50%;  /* position the top  edge of the element at the middle of the parent */
+                left: 50%; /* position the left edge of the element at the middle of the parent */
+                transform: translate(-50%, -50%); /* center */
+                z-index: 3000;
+            }
+
+                .swiper-slide {
+                text-align: center;
+                font-size: 18px;
+                background: #fff;
+
+                /* Center slide text vertically */
+                display: -webkit-box;
+                display: -ms-flexbox;
+                display: -webkit-flex;
+                display: flex;
+                -webkit-box-pack: center;
+                -ms-flex-pack: center;
+                -webkit-justify-content: center;
+                justify-content: center;
+                -webkit-box-align: center;
+                -ms-flex-align: center;
+                -webkit-align-items: center;
+                align-items: center;
+            }
+
+            #model {
+                position: absolute;
+                background-color: #fff;
+                width: 100%;
+                height: 100%;
+                top: 50%;  /* position the top  edge of the element at the middle of the parent */
+                left: 50%; /* position the left edge of the element at the middle of the parent */
+                transform: translate(-50%, -50%); /* center */
+                z-index: 3000;
+            }
+            #qr {
+                position: absolute;
+                width: 80px;
+                height: 80px;
+                top: 25px;
+                right: 20px;
+                z-index: 9999999;
+            }
+
+            #qr-text {
+                position: absolute;
+                font-family: Arial, Helvetica, sans-serif;
+                font-weight: bold;
+                font-size: 12px;
+                top: 0;
+                right: 5px;
+                z-index: 9999999;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }); };
+        var createScene = function () {
+    var scene = new BABYLON.Scene(engine);
+
+   scene.clearColor = new BABYLON.Color3(0.3, 0.6, 0.902);
+   //scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+
+   scene.debugLayer.show({embedMode: true, handleResize: true, enableClose: true, enablePopup: true, overlay: true});
+
+    var light = new BABYLON.HemisphericLight("Light", new BABYLON.Vector3(0,0,0), scene);
+    light.intensity = 10;
+
+    var light2 = new BABYLON.HemisphericLight("Light", new BABYLON.Vector3(0,5,0), scene);
+    light2.intensity = 2;
+
+    var light4 = new BABYLON.HemisphericLight("Light", new BABYLON.Vector3(0,5,0), scene);
+    light4.intensity = 1;
+
+    //Add the camera, to be shown as a cone and surrounding collision volume
+    var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(48, 5.116, -1.83), scene);
+    camera.minZ = 0.01;
+    camera.attachControl(canvas, true);
+    camera.speed = 0.03;
+    camera.angularSpeed = 0.04;
+    camera.angle = Math.PI/2;
+    camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
+
+
+    camera.rotation.y = 447.8;
+
+    var galleryBuilding = BABYLON.SceneLoader.Append("/models/NewGallery2.9.glb", "", scene, function (scene) {
+        var root = scene.getNodeByName("__root__");
+        root.name = "gallery";
+
+        root.getChildMeshes().forEach(m => {
+            m.checkCollisions = true;
+        });
+
+        var floor = scene.getMeshByName("floor");
+        var floorMat = new BABYLON.StandardMaterial("floorMat", scene);
+
+        floorMat.diffuseColor = new BABYLON.Vector3(0.2, 0.2, 0.2);
+        floorMat.diffuseTexture = null;  
+        
+        light.excludedMeshes.push(floor);
+        //light2.excludedMeshes.push(boxCloud);
+    });
+
+    //clouds
+    var boxCloud = BABYLON.Mesh.CreateSphere("boxCloud", 1000, 1000, scene);
+    boxCloud.position = new BABYLON.Vector3(0, 0, 12);
+    var cloudMaterial = new BABYLON.StandardMaterial("cloudMat", scene);
+    var cloudProcText = new BABYLON.CloudProceduralTexture("cloud", 1024, scene);
+    cloudMaterial.emissiveTexture = cloudProcText;
+    cloudMaterial.backFaceCulling = false;
+    cloudMaterial.emissiveTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+    boxCloud.material = cloudMaterial;
+    light.excludedMeshes.push(boxCloud);
+    light2.excludedMeshes.push(boxCloud);
+    boxCloud.rotation.x = 120;
+
+        //create art canvas
+
+        //create uv array to add texture to only one face
+        var faceUV = new Array(6);
+
+        var mat = new BABYLON.StandardMaterial("mat", scene);
+        mat.diffuseColor = new BABYLON.Color3(.9,.9,.9);
+        var texture = new BABYLON.Texture("/images/Afro_Wave.jpg", scene);
+        mat.diffuseTexture = texture;
+
+        //set each uv face to blank
+        for (var i = 0; i < 6; i++) {
+            faceUV[i] = new BABYLON.Vector4(0, 0, 0, 0);
+        }
+
+        var options = {
+            width: 10,
+            height: 0.2,
+            depth: 8,
+            faceUV: faceUV
+        };
+
+        //make face 4 equal to our artwork texture
+        faceUV[4] = new BABYLON.Vector4(0,0,1,1);
+        var canvas = BABYLON.MeshBuilder.CreateBox('canvas', options, scene);
+        canvas.material = mat;
+        canvas.rotation = new BABYLON.Vector3(0, -1.58, -1.58);
+        canvas.position = new BABYLON.Vector3(17.5, 10, -43);
+        light.excludedMeshes.push(canvas);
+
+        //click to toggle swipe div
+        canvas.actionManager = new BABYLON.ActionManager(scene);
+
+        canvas.actionManager.registerAction(
+            new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
+            function(event){
+                var pickedMesh = event.meshUnderPointer; 
+
+                var x = document.getElementById("gallery-wrapper");
+
+                x.style.display = "block";
+                x.style.opacity = "100%";
+            })
+        )
+
+
+
+    var faceUV2 = new Array(6);
+
+    var mat2 = new BABYLON.StandardMaterial("mat", scene);
+    mat2.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    var texture2 = new BABYLON.Texture("/images/They_will_call_You_Villain.jpg", scene);
+    mat2.diffuseTexture = texture2;
+
+    //set each uv face to blank
+    for (var i = 0; i < 6; i++) {
+        faceUV2[i] = new BABYLON.Vector4(0, 0, 0, 0);
+    }
+
+    var options = {
+        width: 10,
+        height: 0.2,
+        depth: 8,
+        faceUV: faceUV2
+    };
+
+    //make face 4 equal to our artwork texture
+    faceUV2[4] = new BABYLON.Vector4(0,0,1,1);
+    var canvas2 = BABYLON.MeshBuilder.CreateBox('canvas2', options, scene);
+    canvas2.material = mat2;
+    canvas2.rotation = new BABYLON.Vector3(0, -1.58, -1.58);
+    canvas2.position = new BABYLON.Vector3(-33.1, 10, -43.1);
+    light.excludedMeshes.push(canvas2);
+
+    //click to toggle swipe div
+    canvas2.actionManager = new BABYLON.ActionManager(scene);
+
+    canvas2.actionManager.registerAction(
+        new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
+        function(event){
+            var pickedMesh = event.meshUnderPointer; 
+
+            var x = document.getElementById("gallery-wrapper");
+
+            x.style.display = "block";
+            x.style.opacity = "100%";
+        })
+    )
+
+    var faceUV3 = new Array(6);
+
+    var mat3 = new BABYLON.StandardMaterial("mat", scene);
+    mat3.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    var art3 = new BABYLON.Texture("/images/Untitled_Artwork.jpg", scene);
+    mat3.diffuseTexture = art3;
+    mat3.diffuseTexture.hasAlpha = true;
+
+    //set each uv face to blank
+    for (var i = 0; i < 6; i++) {
+        faceUV3[i] = new BABYLON.Vector4(0, 0, 0, 0);
+    }
+
+    var options = {
+        width: 10,
+        height: 0.2,
+        depth: 8,
+        faceUV: faceUV3
+    };
+
+    //make face 4 equal to our artwork texture
+    faceUV3[4] = new BABYLON.Vector4(0,0,1,1);
+    var canvas3 = BABYLON.MeshBuilder.CreateBox('canvas3', options, scene);
+    canvas3.material = mat3;
+    canvas3.rotation = new BABYLON.Vector3(0, -.01, -1.58);
+    canvas3.position = new BABYLON.Vector3(-47.8, 10, -1.67);
+    light.excludedMeshes.push(canvas3);
+
+    //click to toggle swipe div
+    canvas3.actionManager = new BABYLON.ActionManager(scene);
+
+    canvas3.actionManager.registerAction(
+        new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
+        function(event){
+            var pickedMesh = event.meshUnderPointer; 
+
+            var x = document.getElementById("gallery-wrapper");
+
+            x.style.display = "block";
+            x.style.opacity = "100%";
+        })
+    )
+
+    var faceUV4 = new Array(6);
+
+    var mat4 = new BABYLON.StandardMaterial("mat", scene);
+    mat4.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    var art4 = new BABYLON.Texture("/images/rootsGuideTheCompass.JPG", scene);
+    mat4.diffuseTexture = art4;
+    mat4.diffuseTexture.hasAlpha = true;
+
+    //set each uv face to blank
+    for (var i = 0; i < 6; i++) {
+        faceUV4[i] = new BABYLON.Vector4(0, 0, 0, 0);
+    }
+
+    var options = {
+        width: 10,
+        height: 0.2,
+        depth: 8,
+        faceUV: faceUV4
+    };
+
+    //make face 4 equal to our artwork texture
+    faceUV4[5] = new BABYLON.Vector4(0,0,1,1);
+    var canvas4 = BABYLON.MeshBuilder.CreateBox('canvas4', options, scene);
+    canvas4.material = mat4;
+    canvas4.rotation = new BABYLON.Vector3(-3.13, -1.58, -1.58);
+    canvas4.position = new BABYLON.Vector3(-33.85, 10, 38.17);
+    light.excludedMeshes.push(canvas4);
+
+    //click to toggle swipe div
+    canvas4.actionManager = new BABYLON.ActionManager(scene);
+
+    canvas4.actionManager.registerAction(
+        new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
+        function(event){
+            var pickedMesh = event.meshUnderPointer; 
+
+            var x = document.getElementById("gallery-wrapper");
+
+            x.style.display = "block";
+            x.style.opacity = "100%";
+        })
+    )
+
+    var faceUV5 = new Array(6);
+
+    var mat5 = new BABYLON.StandardMaterial("mat", scene);
+    mat5.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    var art5 = new BABYLON.Texture("/images/paperBonesI.JPG", scene);
+    mat5.diffuseTexture = art5;
+    mat5.diffuseTexture.hasAlpha = true;
+
+    //set each uv face to blank
+    for (var i = 0; i < 6; i++) {
+        faceUV5[i] = new BABYLON.Vector4(0, 0, 0, 0);
+    }
+
+    var options = {
+        width: 10,
+        height: 0.2,
+        depth: 8,
+        faceUV: faceUV5
+    };
+
+    //make face 4 equal to our artwork texture
+    faceUV5[5] = new BABYLON.Vector4(0,0,1,1);
+    var canvas5 = BABYLON.MeshBuilder.CreateBox('canvas5', options, scene);
+    canvas5.material = mat5;
+    canvas5.rotation = new BABYLON.Vector3(-3.13, -1.58, -1.58);
+    canvas5.position = new BABYLON.Vector3(17.41, 10, 38.27);
+    light.excludedMeshes.push(canvas5);
+
+    //click to toggle swipe div
+    canvas5.actionManager = new BABYLON.ActionManager(scene);
+
+    canvas5.actionManager.registerAction(
+        new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
+        function(event){
+            var pickedMesh = event.meshUnderPointer; 
+
+            var x = document.getElementById("gallery-wrapper");
+
+            x.style.display = "block";
+            x.style.opacity = "100%";
+        })
+    )
+
+
+    light2.excludedMeshes.push(canvas2);
+    light4.includedOnlyMeshes.push(canvas2);	
+
+
+
+
+    
+    camera.rotation.y += Math.PI;
+
+
+    //Dummy camera as cone
+
+    /* Set Up Scenery
+    _____________________*/
+
+    //Ground
+    var ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 1000, height: 1000}, scene);
+    ground.material = new BABYLON.StandardMaterial("groundMat", scene);
+    ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    ground.material.backFaceCulling = false;
+
+    light2.excludedMeshes.push(ground);
+    light.excludedMeshes.push(ground);
+
+    var lowerGround = ground.clone("lowerGround");
+    lowerGround.scaling.x = 4;
+    lowerGround.scaling.z = 4;
+    lowerGround.position.y = -16;
+    lowerGround.material = ground.material.clone("lowerMat");
+    lowerGround.material.diffuseColor = new BABYLON.Color3(0, 1, 0);
+    
+
+    /* End Create Scenery */
+
+    //Gravity and Collisions Enabled
+    scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
+    scene.collisionsEnabled = true;
+
+    camera.checkCollisions = true;
+    camera.applyGravity = true;
+
+    ground.checkCollisions = true;
+    lowerGround.checkCollisions = true;
+
+    camera.ellipsoid = new BABYLON.Vector3(0.5, 3, 0.5);
+    camera.ellipsoidOffset = new BABYLON.Vector3(0, 1, 0);
+
+    var light3 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(20, 20, 100), scene);
+    // Create the "God Rays" effect (volumetric light scattering)
+	var godrays = new BABYLON.VolumetricLightScatteringPostProcess('godrays', 1.0, camera, null, 1, BABYLON.Texture.BILINEAR_SAMPLINGMODE, scene, false);
+
+
+    godrays.samples = 2;
+    // By default it uses a billboard to render the sun, just apply the desired texture
+    // position and scale
+    godrays.mesh.material.diffuseTexture = new BABYLON.Texture('images/sun.png', scene, true, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
+    godrays.mesh.material.diffuseTexture.hasAlpha = true;
+    godrays.mesh.position = new BABYLON.Vector3(0, 100, 0);
+    godrays.mesh.scaling = new BABYLON.Vector3(50, 50, 50);
+
+    light3.position = godrays.mesh.position;
+    light3.excludedMeshes.push(boxCloud);
+
+
+
+    
+
+    //Create Visible Ellipsoid around camera
+
+    // GUI
+    var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        
+        var button = BABYLON.GUI.Button.CreateImageOnlyButton("but", "/images/VR-512.png");
+        button.width = "50px";
+        button.height = "50px";
+        button.color = "transparent";
+        button.image.detectPointerOnOpaqueOnly = true;
+        button.children[0].detectPointerOnOpaqueOnly = true;
+        button.top = "-430px"
+        button.left = "830px"
+        //button.background = "rgba(0.5, 0.5, 0.5, 0.6)";
+        //button.alpha = 0;
+        advancedTexture.addControl(button);
+        button.onPointerDownObservable.add(function() {
+            window.location.href = "/insideVR.html";
+    });
+
+
+    /* New Input Management for Camera
+    __________________________________*/
+
+    //First remove the default management.
+    camera.inputs.removeByType("FreeCameraKeyboardMoveInput");
+    camera.inputs.removeByType("FreeCameraMouseInput");
+
+    //Key Input Manager To Use Keys to Move Forward and BackWard and Look to the Left or Right
+    var FreeCameraKeyboardWalkInput = function () {
+        this._keys = [];
+        this.keysUp = [38];
+        this.keysDown = [40];
+        this.keysLeft = [37];
+        this.keysRight = [39];
+        this.keysSpace = [32];
+    }
+
+    //Add attachment controls
+    FreeCameraKeyboardWalkInput.prototype.attachControl = function (noPreventDefault) {
+            var _this = this;
+            var engine = this.camera.getEngine();
+            var element = engine.getInputElement();
+            if (!this._onKeyDown) {
+                element.tabIndex = 1;
+                this._onKeyDown = function (evt) {
+                    if (_this.keysUp.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysDown.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysLeft.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysRight.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysSpace.indexOf(evt.keyCode) !== -1 ) {
+                        var index = _this._keys.indexOf(evt.keyCode);
+                        if (index === -1) {
+                            _this._keys.push(evt.keyCode);
+                        }
+                        if (!noPreventDefault) {
+                            evt.preventDefault();
+                        }
+                    }
+                };
+                this._onKeyUp = function (evt) {
+                    if (_this.keysUp.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysDown.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysLeft.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysRight.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysSpace.indexOf(evt.keyCode) !== -1 ) {
+                        var index = _this._keys.indexOf(evt.keyCode);
+                        if (index >= 0) {
+                            _this._keys.splice(index, 1);
+                        }
+                        if (!noPreventDefault) {
+                            evt.preventDefault();
+                        }
+                    }
+                };
+                element.addEventListener("keydown", this._onKeyDown, false);
+                element.addEventListener("keyup", this._onKeyUp, false);
+            }
+        };
+
+
+        //Add detachment controls
+        FreeCameraKeyboardWalkInput.prototype.detachControl = function () {
+            var engine = this.camera.getEngine();
+            var element = engine.getInputElement();
+            if (this._onKeyDown) {
+                element.removeEventListener("keydown", this._onKeyDown);
+                element.removeEventListener("keyup", this._onKeyUp);
+                BABYLON.Tools.UnregisterTopRootEvents([
+                    { name: "blur", handler: this._onLostFocus }
+                ]);
+                this._keys = [];
+                this._onKeyDown = null;
+                this._onKeyUp = null;
+            }
+        };
+
+        //Keys movement control by checking inputs
+        FreeCameraKeyboardWalkInput.prototype.checkInputs = function () {
+            if (this._onKeyDown) {
+                var camera = this.camera;
+                for (var index = 0; index < this._keys.length; index++) {
+                    var keyCode = this._keys[index];
+                    var speed = camera.speed;
+                    if (this.keysLeft.indexOf(keyCode) !== -1) {
+                        camera.rotation.y -= camera.angularSpeed;
+                        camera.direction.copyFromFloats(0, 0, 0);
+                    }
+                    else if (this.keysUp.indexOf(keyCode) !== -1) {
+                        camera.direction.copyFromFloats(0, 0, speed);
+                    }
+                    else if (this.keysRight.indexOf(keyCode) !== -1) {
+                        camera.rotation.y += camera.angularSpeed;
+                        camera.direction.copyFromFloats(0, 0, 0);
+                    }
+                    else if (this.keysDown.indexOf(keyCode) !== -1) {
+                        camera.direction.copyFromFloats(0, 0, -speed);
+                    } else if (this.keysSpace.indexOf(keyCode) !== -1) {
+                        camera.position.y += 1;
+                        camera.direction.copyFromFloats(0, 0, 0);
+                    }
+                    if (camera.getScene().useRightHandedSystem) {
+                        camera.direction.z *= -1;
+                    }
+                    camera.getViewMatrix().invertToRef(camera._cameraTransformMatrix);
+                    BABYLON.Vector3.TransformNormalToRef(camera.direction, camera._cameraTransformMatrix, camera._transformedDirection);
+                    camera.cameraDirection.addInPlace(camera._transformedDirection);
+                }
+            }
+        };
+
+        //Add the onLostFocus function
+        FreeCameraKeyboardWalkInput.prototype._onLostFocus = function (e) {
+            this._keys = [];
+        };
+
+        //Add the two required functions for the control Name
+        FreeCameraKeyboardWalkInput.prototype.getClassName = function () {
+            return "FreeCameraKeyboardWalkInput";
+        };
+
+        FreeCameraKeyboardWalkInput.prototype.getSimpleName = function () {
+            return "keyboard";
+        };
+
+    //Add the new keys input manager to the camera.
+     camera.inputs.add(new FreeCameraKeyboardWalkInput());
+
+
+
+    //The Mouse Manager to use the mouse (touch) to search around including above and below
+    var FreeCameraSearchInput = function (touchEnabled) {
+        if (touchEnabled === void 0) { touchEnabled = true; }
+        this.touchEnabled = touchEnabled;
+        this.buttons = [0, 1, 2];
+        this.angularSensibility = 2000.0;
+        this.restrictionX = 100;
+        this.restrictionY = 60;
+    }
+
+    //add attachment control which also contains the code to react to the input from the mouse
+    FreeCameraSearchInput.prototype.attachControl = function (noPreventDefault) {
+        var _this = this;
+        var engine = this.camera.getEngine();
+        var element = engine.getInputElement();
+        var angle = {x:0, y:0};
+        if (!this._pointerInput) {
+            this._pointerInput = function (p, s) {
+                var evt = p.event;
+                if (!_this.touchEnabled && evt.pointerType === "touch") {
+                    return;
+                }
+                if (p.type !== BABYLON.PointerEventTypes.POINTERMOVE && _this.buttons.indexOf(evt.button) === -1) {
+                    return;
+                }
+                if (p.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                    try {
+                        evt.srcElement.setPointerCapture(evt.pointerId);
+                    }
+                    catch (e) {
+                        //Nothing to do with the error. Execution will continue.
+                    }
+                    _this.previousPosition = {
+                        x: evt.clientX,
+                        y: evt.clientY
+                    };
+                    if (!noPreventDefault) {
+                        evt.preventDefault();
+                        element.focus();
+                    }
+                }
+                else if (p.type === BABYLON.PointerEventTypes.POINTERUP) {
+                    try {
+                        evt.srcElement.releasePointerCapture(evt.pointerId);
+                    }
+                    catch (e) {
+                        //Nothing to do with the error.
+                    }
+                    _this.previousPosition = null;
+                    if (!noPreventDefault) {
+                        evt.preventDefault();
+                    }
+                }
+                else if (p.type === BABYLON.PointerEventTypes.POINTERMOVE) {
+                    if (!_this.previousPosition || engine.isPointerLock) {
+                        return;
+                    }
+                    var offsetX = evt.clientX - _this.previousPosition.x;
+                    var offsetY = evt.clientY - _this.previousPosition.y;
+                    angle.x +=offsetX;
+                    angle.y -=offsetY;
+                    if(Math.abs(angle.x) > _this.restrictionX )  {
+                        angle.x -=offsetX;
+                    }
+                    if(Math.abs(angle.y) > _this.restrictionY )  {
+                        angle.y +=offsetY;
+                    }
+                    if (_this.camera.getScene().useRightHandedSystem) {
+                        if(Math.abs(angle.x) < _this.restrictionX )  {
+                            _this.camera.cameraRotation.y -= offsetX / _this.angularSensibility;
+                        }
+                    }
+                    else {
+                        if(Math.abs(angle.x) < _this.restrictionX )  {
+                            _this.camera.cameraRotation.y += offsetX / _this.angularSensibility;
+                        }
+                    }
+                    if(Math.abs(angle.y) < _this.restrictionY )  {
+                        _this.camera.cameraRotation.x += offsetY / _this.angularSensibility;
+                    }
+                    _this.previousPosition = {
+                        x: evt.clientX,
+                        y: evt.clientY
+                    };
+                    if (!noPreventDefault) {
+                        evt.preventDefault();
+                    }
+                }
+            };
+        }
+        this._onSearchMove = function (evt) {
+            if (!engine.isPointerLock) {
+                return;
+            }
+            var offsetX = evt.movementX || evt.mozMovementX || evt.webkitMovementX || evt.msMovementX || 0;
+            var offsetY = evt.movementY || evt.mozMovementY || evt.webkitMovementY || evt.msMovementY || 0;
+            if (_this.camera.getScene().useRightHandedSystem) {
+                _this.camera.cameraRotation.y -= offsetX / _this.angularSensibility;
+            }
+            else {
+                _this.camera.cameraRotation.y += offsetX / _this.angularSensibility;
+            }
+            _this.camera.cameraRotation.x += offsetY / _this.angularSensibility;
+            _this.previousPosition = null;
+            if (!noPreventDefault) {
+                evt.preventDefault();
+            }
+        };
+        this._observer = this.camera.getScene().onPointerObservable.add(this._pointerInput, BABYLON.PointerEventTypes.POINTERDOWN | BABYLON.PointerEventTypes.POINTERUP | BABYLON.PointerEventTypes.POINTERMOVE);
+        element.addEventListener("mousemove", this._onSearchMove, false);
+    };
+
+    //Add detachment control
+    FreeCameraSearchInput.prototype.detachControl = function () {
+        var engine = this.camera.getEngine();
+        var element = engine.getInputElement();
+        if (this._observer && element) {
+            this.camera.getScene().onPointerObservable.remove(this._observer);
+            element.removeEventListener("mousemove", this._onSearchMove);
+            this._observer = null;
+            this._onSearchMove = null;
+            this.previousPosition = null;
+        }
+    };
+
+    //Add the two required functions for names
+    FreeCameraSearchInput.prototype.getClassName = function () {
+        return "FreeCameraSearchInput";
+    };
+
+    FreeCameraSearchInput.prototype.getSimpleName = function () {
+        return "MouseSearchCamera";
+    };
+
+    //Add the new mouse input manager to the camera
+    camera.inputs.add(new FreeCameraSearchInput());
+
+
+
+    return scene;
+}
+    var engine;
+    try {
+    engine = createDefaultEngine();
+    } catch(e) {
+    console.log("the available createEngine function failed. Creating the default engine instead");
+    engine = createDefaultEngine();
+    }
+        if (!engine) throw 'engine should not be null.';
+        scene = createScene();;
+        sceneToRender = scene
+
+        engine.runRenderLoop(function () {
+            if (sceneToRender && sceneToRender.activeCamera) {
+                sceneToRender.render();
+            }
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+        <!-- swiper -->
+
+        <div id="gallery-wrapper" class="galWrap">
+        <div id="gallery-box" onload="time()" onclick="hide()"></div>
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                <div class="swiper-slide" class="noSwipingClass">Slide 1</div>
+                    <model-viewer id="model" src="/images/cube-test.gltf" ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" camera-controls alt="test" ios-src="/images/cube-test.usdz">
+                    </model-viewer>
+                    <img id="qr" src="/images/QR-test.png">
+                    <h1 id="qr-text">Scan To View in AR</h1>
+                <div class="swiper-slide">Slide 2</div>
+                <div class="swiper-slide">Slide 3</div>
+                <div class="swiper-slide">Slide 4</div>
+                <div class="swiper-slide">Slide 5</div>
+                <div class="swiper-slide">Slide 6</div>
+                <div class="swiper-slide">Slide 7</div>
+                <div class="swiper-slide">Slide 8</div>
+                <div class="swiper-slide">Slide 9</div>
+                <div class="swiper-slide">Slide 10</div>
+                </div>
+                <!-- Add Pagination -->
+                <div class="swiper-pagination"></div>
+                <!-- Add Arrows -->
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+            </div> 
+        </div>   
+            <!-- Initialize Swiper -->
+            <script>
+                var swiper = new Swiper('.swiper-container', {
+                spaceBetween: 30,
+                centeredSlides: true,
+                allowTouchMove: false,
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                },
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                });
+
+                window.addEventListener("load", function(){
+                var x = document.getElementById("gallery-wrapper");
+                        setTimeout(function() {var x = document.getElementById("gallery-wrapper");x.style.display = "none";}, 1000);
+                })
+
+                function hide() {
+                    var x = document.getElementById("gallery-wrapper");
+                    var y = document.getElementsByClassName('galWrap');
+
+                    x.style.opacity = "0%";
+                    x.style.display = "none";
+                    
+                }
+            </script>
+        </div>>
+
+</body>
+</html>
