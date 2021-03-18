@@ -159,7 +159,7 @@
 
     camera.rotation.y = 447.8;
 
-    var galleryBuilding = BABYLON.SceneLoader.Append("/models/NewGallery3.25.glb", "", scene, function (scene) {
+    var galleryBuilding = BABYLON.SceneLoader.Append("/models/NewGallery3.3.glb", "", scene, function (scene) {
         var root = scene.getNodeByName("__root__");
         root.name = "gallery";
 
@@ -181,12 +181,18 @@
         glass.roughness = 0.2
         glass.alpha = 0.2
 
-        light.excludedMeshes.push(floor);
+        light.excludedMeshes.push();
         light2.excludedMeshes.push(floor);
         var glassDoor = scene.getMeshByName("GlassDoors");
+
+        const black = new BABYLON.StandardMaterial('glass', scene)
+        black.diffuseColor = new BABYLON.Color3(0, 0, 0);
+        var doorLining = scene.getMeshByName("doorlining");
+        doorLining.material = black;
         glassDoor.material = glass;
-        light.excludedMeshes.push(glassDoor);
-        light2.excludedMeshes.push(glassDoor);
+        light.excludedMeshes.push(glassDoor, doorLining);
+        light3.excludedMeshes.push(doorLining);
+        light2.excludedMeshes.push(glassDoor, doorLining);
     });
 
     var fashionBuilding = BABYLON.SceneLoader.Append("/models/FashionStore3.26.glb", "", scene, function (scene) {
