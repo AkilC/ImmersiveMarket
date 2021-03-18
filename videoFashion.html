@@ -1,0 +1,22 @@
+<style>
+    #myVid {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        min-width: 100%;
+        min-height: 100%;
+    }
+</style>
+
+<body>
+    <video autoplay muted id="myVid">
+        <source src="https://cdn.glitch.com/70dbad3b-1f56-4b3f-96b7-05e0de0f2754%2FmarketVideo.mp4?v=1608187956318" type="video/mp4">
+    </video> 
+    <script>
+        const video = document.querySelector('video');
+
+        video.addEventListener('ended', (event) => {
+            window.location.href = "/fashion.html";
+        });
+    </script>
+</body>
