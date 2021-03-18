@@ -54,14 +54,7 @@
         var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }); };
         var createScene = function () {
     var scene = new BABYLON.Scene(engine);
-    // uncomment below for debug layer
-    //scene.debugLayer.show(
-      //          {
-        //           embedMode: true, handleResize: true, enableClose: false, enablePopup: false, overlay: true
-          //      }
-            //);
-            
-    //background color
+    scene.debugLayer.show({embedMode: true, handleResize: true, enableClose: true, enablePopup: true, overlay: true});
     scene.clearColor = new BABYLON.Color3(0.3, 0.6, 0.902);
 
     var light = new BABYLON.HemisphericLight("Light", new BABYLON.Vector3(0,1,0), scene);
@@ -71,8 +64,22 @@
     scene.fogDensity = 0.00013;
     scene.fogColor = new BABYLON.Color3(0.9, 0.9, 0.85);
 
-    //camera setup
-    var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(0, 5, 140), scene);
+    const sceneBox = BABYLON.MeshBuilder.CreateBox("scenebox", {height: 300, width: 200, depth: 210});
+    sceneBox.visibility = 0;
+    sceneBox.flipFaces(true);
+    sceneBox.position = new BABYLON.Vector3(0, 150, -30);
+    sceneBox.checkCollisions = true;
+
+    const buildingBox = BABYLON.MeshBuilder.CreateBox("buildbox", {height: 50, width: 150, depth: 150});
+    buildingBox.position = new BABYLON.Vector3(115, 25, -30);
+    buildingBox.scaling.z = 0.8;
+    buildingBox.rotation = new BABYLON.Vector3(0, -0.01,0);;
+    buildingBox.visibility = 0;
+    buildingBox.checkCollisions = true;
+
+
+    //Add the camera, to be shown as a cone and surrounding collision volume
+    var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(0, 5, 70), scene);
     camera.minZ = 0.01;
 
     camera.attachControl(canvas, true);
@@ -81,16 +88,26 @@
     camera.angle = Math.PI/2;
     camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
 
-            
-    //create null master node to add buildings into
     var nullObj = new BABYLON.TransformNode("master");
 
-    //Add first building
-    BABYLON.SceneLoader.Append("https://cdn.glitch.com/70dbad3b-1f56-4b3f-96b7-05e0de0f2754%2Fstore-box2.glb?v=1610831567238", "Store.glb", scene, function (scene) {
+    BABYLON.SceneLoader.Append("/models/store-box2.glb", "", scene, function (scene) {
         var root = scene.getNodeByName('__root__');
         root.name = "build";
         root.parent = nullObj;
     });
+
+    var boxCloud = BABYLON.Mesh.CreateSphere("boxCloud", 50, 1500, scene);
+    boxCloud.position = new BABYLON.Vector3(0, 0, 12);
+    var cloudMaterial = new BABYLON.StandardMaterial("cloudMat", scene);
+    var cloudProcText = new BABYLON.CloudProceduralTexture("cloud", 128, scene);
+    cloudMaterial.emissiveTexture = cloudProcText;
+    cloudMaterial.backFaceCulling = false;
+    cloudMaterial.emissiveTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+    boxCloud.material = cloudMaterial;
+
+    boxCloud.rotation.x = 120;
+
+    light.excludedMeshes.push(boxCloud);
 
     var zvalue = 0;
     var zvalue2 = 0;
@@ -105,10 +122,8 @@
                 building.rotation.y = 1.571;
                 name.rotation.y = 1.571;
                 root.parent = nullObj;
-
-                var buildings = [root];
                 
-                //duplicate buildings
+                var buildings = [root];
                 for (var i = 1; i < 5; i++) {
                     var newBuildingL = root.clone("root" + i);
                     var newBuildingR = root.clone("root" + i);
@@ -124,7 +139,6 @@
                 buildingOneR.rotation = new BABYLON.Vector3(0,0,0);
                 buildings.push(buildingOneR);
                 buildingOneR.position = new BABYLON.Vector3(-55,8,0);
-
 
                 //var buildings2 = [root];
                 zvalue3 = -160;
@@ -166,17 +180,17 @@
                     newBuildingRO.position = new BABYLON.Vector3(xvalue3-=30,8,-191.2);
                     newBuildingLO.position = new BABYLON.Vector3(xvalue4+=30,8,-191.2);
                 }
-        
-                var blocks = [nullObj];
-                var block2 = nullObj.clone("master2");
-                var block3 = nullObj.clone("master3");
-                var block4 = nullObj.clone("master3");
-                block2.position = new BABYLON.Vector3(0,0, -500);
-                block3.position = new BABYLON.Vector3(0,0, -1000);
-                block4.position = new BABYLON.Vector3(0,0, -1500);
-                blocks.push(block2);
-                blocks.push(block3);
-                blocks.push(block4);
+            var blocks = [nullObj];
+            var block2 = nullObj.clone("master2");
+            var block3 = nullObj.clone("master3");
+            var block4 = nullObj.clone("master4");
+            nullObj.position = new BABYLON.Vector3(0,0, -200);
+            block2.position = new BABYLON.Vector3(0,0, -700);
+            block3.position = new BABYLON.Vector3(0,0, -1200);
+            block4.position = new BABYLON.Vector3(0,0, -1700);
+            blocks.push(block2);
+            blocks.push(block3);
+            blocks.push(block4);
                 var side2 = scene.getMeshByName("collidePlane");
                 var side1 = scene.getMeshByName("collide");
 
@@ -195,10 +209,9 @@
                     collisionDetected = false;
                 }
             }
-            });
+        });
 
 
-            //add human simulations
             var zHuman1 = 440;
             var zHuman2 = 470;
             var zHuman3 = 250;
@@ -241,6 +254,274 @@
                     woman2.scaling = new BABYLON.Vector3(3, 3, 3);
                 });
             }
+            //scene.executeWhenReady(function () {
+            var galleryBuilding = BABYLON.SceneLoader.Append("/models/NewGallery3.25Ext.glb", "", scene, function (scene) {
+                var root1 = scene.getNodeByName("__root__");
+                root1.name = "gallery";
+                root1.position = new BABYLON.Vector3(-90,1,-28);
+
+                var doorlight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(-50,90,-40), new BABYLON.Vector3(0, -1, 0), Math.PI / 2, 13, scene);
+                doorlight.diffuse = new BABYLON.Color3(1, 1, 0);
+                doorlight.specular = new BABYLON.Color3(0, 0, 1);
+                var light3 = new BABYLON.PointLight("Light", new BABYLON.Vector3(-100,30,-30), scene);
+                light3.intensity = 15;
+
+                root1.getChildMeshes().forEach(m => {
+                    //m.checkCollisions = true;
+                    light3.includedOnlyMeshes.push(m);
+                });
+
+                var floor = scene.getMeshByName("floor");
+
+                floor.material.roughness = 1;
+                floor.material.metallic = 0.75;
+                floor.material.emissiveColor = new BABYLON.Color3(0, 0, 0);
+                floor.material.usePhysicalLightFalloff = false;
+
+                const glass2 = new BABYLON.PBRMetallicRoughnessMaterial('glass', scene)
+                glass2.baseColor = new BABYLON.Color3(0.78, 0.82, 0.85)
+                glass2.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0.2)
+                glass2.metallic = 1.0
+                glass2.roughness = 0.2
+                glass2.alpha = 0.2
+
+                var doors = scene.getMeshByName("GlassDoors");
+                doors.material = glass2;
+
+                var roof = scene.getMeshByName("celling");
+                var walls = scene.getMeshByName("walls_exterior");
+
+
+                //walls.material.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+                walls.material.albedoColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+
+                var signBox = scene.getMeshByName("signBox");
+                var signMaterial = new BABYLON.StandardMaterial("sign", scene);
+                signMaterial.emissiveColor = new BABYLON.Color3(0, 0, 0);
+                signMaterial.albedoColor = new BABYLON.Color3(0, 0, 0);
+                signBox.material.albedoColor = new BABYLON.Color3(0, 0, 0);
+
+                var gallerySign = scene.getMeshByName("FarEast");
+                gallerySign.material.emissiveColor = new BABYLON.Color3(1,1,1);
+
+                var bulb1 = scene.getMeshByName("bulb1");
+                bulb1.material.emissiveColor = new BABYLON.Vector3(1,1, .5)
+
+
+                light3.excludedMeshes.push(boxCloud);
+
+                var collide = scene.getMeshByName("walls_exteriorCollide");
+                collide.flipFaces(true);
+                collide.checkCollisions = true;
+                collide.visibility = 0;
+
+
+                //light.excludedMeshes.push(floor);
+                //light2.excludedMeshes.push(boxCloud);
+            });
+        //});
+
+
+        var fashionBuilding = BABYLON.SceneLoader.Append("/models/FashionStore3.26.glb", "", scene, function (scene) {
+            var root = scene.getNodeByName("__root__");
+            root.name = "fashion";
+
+            var light2 = new BABYLON.PointLight("Light", new BABYLON.Vector3(0,35,0), scene);
+            light2.intensity = 15;
+            var beloved = scene.getMeshByName("Curve.016");
+
+            root.getChildMeshes().forEach(m => {
+                if (m != beloved) {
+                    light.excludedMeshes.push(m);
+                    light2.includedOnlyMeshes.push(m);
+                }
+            });
+
+            root.position = new BABYLON.Vector3(100,1,-30);
+            root.rotation = new BABYLON.Vector3(0,-1.58,0);
+
+            var glassdoor1 = scene.getMeshByName("Glass");
+            var glassdoor2 = scene.getMeshByName("Glass.002");
+            var windows = scene.getMeshByName("Plane.002");
+
+            var exteriorFashion = scene.getMeshByName("Cube.001");
+            exteriorFashion.material.backFaceCulling = true;
+
+            var exteriorFashion2 = scene.getMeshByName("Cube.005");
+            //exteriorFashion.flipFaces = true;
+            exteriorFashion.material.backFaceCulling = true;
+            //var exteriorFashion2 = exteriorFashion.clone("buildingColor");
+            //exteriorFashion2.position.z = -1;
+
+            var exteriorMat = new BABYLON.StandardMaterial("exteriorMat", scene);
+            exteriorMat.diffuseColor = new BABYLON.Color3(0,0,0);
+            exteriorMat.backFaceCulling = false;
+            exteriorMat.emissiveColor = new BABYLON.Color3(0,0,0);
+            //exteriorFashion2.scaling = new BABYLON.Vector3(59, -14.5, 58.5);
+            //exteriorFashion2.material = exteriorMat;
+
+
+            const glass = new BABYLON.PBRMetallicRoughnessMaterial('glass', scene)
+            glass.baseColor = new BABYLON.Color3(0.78, 0.82, 0.85)
+            glass.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0.4)
+            glass.metallic = 1.0
+            glass.roughness = 0.2
+            glass.alpha = 0.2
+
+            glassdoor1.material = glass;
+            glassdoor2.material = glass;
+            windows.material = glass;
+
+            var hatbox = scene.getMeshByName("hatBox");
+            hatbox.material = glass;
+
+            var hatbox2 = scene.getMeshByName("hatBox2");
+            hatbox2.material = glass;
+
+            var walls = scene.getMeshByName("Cube.001");
+            walls.material.emissiveColor = new BABYLON.Vector3(.3, 0.3, 0.3);
+
+            var wallsOuter = scene.getMeshByName("Cube.005");
+            wallsOuter.checkCollisions = true;
+
+            var planeOpts = {
+                height: 7, 
+                width: 10, 
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE
+            };
+            var videoPlane = BABYLON.MeshBuilder.CreatePlane("plane", planeOpts, scene);
+            var vidPos = (new BABYLON.Vector3(154.58, 19.9, -31.76));
+            videoPlane.position = vidPos;
+            var videoMat = new BABYLON.StandardMaterial("m", scene);
+            var videoTexture = new BABYLON.VideoTexture("vidtex","/images/B__Dove.mp4", scene);
+            videoMat.diffuseTexture = videoTexture;
+            videoMat.roughness = 1;
+            videoMat.emissiveColor = new BABYLON.Color3.White();
+            videoPlane.material = videoMat;
+            videoPlane.scaling = new BABYLON.Vector3(1.342, 1.138, 1.0);
+            videoPlane.rotation = new BABYLON.Vector3(0, 1.58, 0);
+            scene.onPointerObservable.add(function(evt){
+			if(evt.pickInfo.pickedMesh === videoPlane){
+                        //console.log("picked");
+                            if(videoTexture.video.paused)
+                                videoTexture.video.play();
+                            else
+                                videoTexture.video.pause();
+                            console.log(videoTexture.video.paused?"paused":"playing");
+                    }
+            }, BABYLON.PointerEventTypes.POINTERPICK);
+
+            light2.excludedMeshes.push(videoPlane);
+
+            var statue = scene.getMeshByName("statueBlock");
+            statue.name = "statue";
+
+            var floorMat = scene.getMaterialByName("Material.002");
+
+            var hatStand1 = scene.getMeshByName("hatStand1");
+            var hatStand2 = scene.getMeshByName("hatStand2");
+            var cloRack1 = scene.getMeshByName("CloRack1");
+            var cloRack2 = scene.getMeshByName("CloRack2");
+            var tvBack = scene.getMeshByName("TV-Back");
+            var dove = scene.getMeshByName("Dove");
+
+            floorMat.reflectionTexture = new BABYLON.MirrorTexture("mirror", {ratio: 0.5}, scene, true);
+            floorMat.reflectionTexture.mirrorPlane = new BABYLON.Plane(0, -2.0, 0, -2.0);
+            //floorMat.reflectionTexture.renderList = [statue, hatStand1, hatStand2, cloRack1, cloRack2];
+            floorMat.reflectionTexture.level = 1.0;
+            floorMat.reflectionTexture.adaptiveBlurKernel = 50;
+            floorMat.emissiveColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+
+            var glowParent = new BABYLON.TransformNode("master");
+
+            var purple1 = scene.getMeshByName("Purple1");
+            var purple2 = scene.getMeshByName("Purple.001");
+            var purple3 = scene.getMeshByName("Purple2");
+            var purple4 = scene.getMeshByName("Purple2.001");
+            var purple5 = scene.getMeshByName("Purple3");
+            var purple6 = scene.getMeshByName("Purple3.001");
+            var purple7 = scene.getMeshByName("Purple4");
+            var purple8 = scene.getMeshByName("Purple4.001");
+
+
+            var gl = new BABYLON.GlowLayer("glow", scene);
+            gl.intensity = 0.7;
+            gl.addExcludedMesh(videoPlane);
+            gl.addExcludedMesh(hatbox);
+            gl.addExcludedMesh(hatbox2);
+
+            var glowMat = scene.getMaterialByName("Material");
+            var whiteGlow = new BABYLON.Color3(.7, .7, .7);
+            var purpleGlow = new BABYLON.Color3(.28, .25, .35);
+            glowMat.emissiveColor = whiteGlow;
+
+            var glowAnim = new BABYLON.Animation("glowAnim", "material.emissiveColor", 30, BABYLON.Animation.ANIMATIONTYPE_COLOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+
+            const glowkeyFrames = []; 
+
+            glowkeyFrames.push({
+                frame: 0,
+                value: whiteGlow
+            });
+
+            glowkeyFrames.push({
+                frame: 100,
+                value: whiteGlow
+            });
+
+            glowkeyFrames.push({
+                frame: 200,
+                value: purpleGlow
+            });
+            glowkeyFrames.push({
+                frame: 400,
+                value: purpleGlow
+            });
+            glowkeyFrames.push({
+                frame: 500,
+                value: whiteGlow
+            });
+
+            glowAnim.setKeys(glowkeyFrames);
+            purple1.animations.push(glowAnim);
+
+            scene.beginAnimation(purple1, 0, 500, true);
+            light2.excludedMeshes.push(boxCloud);
+
+
+            //mirror.position = new BABYLON.Vector3(0, 1, 0);
+
+            //light.excludedMeshes.push(cloRack2, cloRack1, statue, dove);
+            //light2.includedOnlyMeshes.push(cloRack2, cloRack1, statue, dove);
+
+            // Shadow
+            //shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+            //shadowGenerator.getShadowMap().renderList.push(statue);
+            //shadowGenerator.setDarkness(0.5);
+            //shadowGenerator.usePoissonSampling = true;
+            //shadowGenerator.bias = 0;
+            //statue.receiveShadows = true;
+
+            var shirt1 = scene.getMeshByName("Shirt1");
+            var shirt2 = scene.getMeshByName("Shirt2");
+
+            var shirt4 = scene.getMeshByName("Shirt4");
+
+            var shirt5 = scene.getMeshByName("Shirt5");
+
+            var shirt6 = scene.getMeshByName("Shirt6");
+
+            var belovedSign = scene.getMeshByName("Curve.016");
+            belovedSign.material.emissiveColor = new BABYLON.Color3(1,1,1);
+
+            
+        
+
+            //light.excludedMeshes.push(cloRack2, cloRack1, statue, dove, shirt1, shirt2, shirt3, shirt4, shirt5, shirt6);
+            //light2.includedOnlyMeshes.push(cloRack2, cloRack1, statue, dove, shirt1, shirt2, shirt3, shirt4, shirt5, shirt6);
+            //floorMat.reflectionTexture.renderList = [statue, hatStand1, hatStand2, cloRack1, cloRack2, shirt1, shirt2, shirt3, shirt4, shirt5, shirt6];
+        });
+
 
     
     camera.rotation.y += Math.PI;
@@ -262,30 +543,29 @@
     lowerGround.material = ground.material.clone("lowerMat");
     lowerGround.material.diffuseColor = new BABYLON.Color3(0, 1, 0);
 
-    //sidewalk
     var sidewalk1 = BABYLON.MeshBuilder.CreateBox("collide", {height: .2, width: 150, depth: 170});
-    sidewalk1.position = new BABYLON.Vector3(100,.5,-60);
+    sidewalk1.position = new BABYLON.Vector3(100,.5,180);
     sidewalk1.material = new BABYLON.StandardMaterial("sidewalk", scene);
     sidewalk1.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
     sidewalk1.checkCollisions = true;
 
     var block2plane = BABYLON.MeshBuilder.CreateBox("collidePlane", {height: .000001, width: 300, depth: 170});
-    block2plane.position = new BABYLON.Vector3(0,0,-560);
+    block2plane.position = new BABYLON.Vector3(0,0,-250);
     block2plane.material = sidewalk1.material;
     block2plane.checkCollisions = true;
     
     var sidewalk2 = BABYLON.MeshBuilder.CreateBox("box", {height: .2, width: 150, depth: 170});
-    sidewalk2.position = new BABYLON.Vector3(-100,.5,-60);
+    sidewalk2.position = new BABYLON.Vector3(-100,.5,180);
     sidewalk2.material = sidewalk1.material;
     sidewalk2.checkCollisions = true;
 
     var sidewalk3 = BABYLON.MeshBuilder.CreateBox("box", {height: .2, width: 150, depth: 170});
-    sidewalk3.position = new BABYLON.Vector3(100,.5,-250);
+    sidewalk3.position = new BABYLON.Vector3(100,.5,-10);
     sidewalk3.material = sidewalk1.material;
     sidewalk3.checkCollisions = true;
 
     var sidewalk4 = BABYLON.MeshBuilder.CreateBox("box", {height: .2, width: 150, depth: 170});
-    sidewalk4.position = new BABYLON.Vector3(-100,.5,-250);
+    sidewalk4.position = new BABYLON.Vector3(-100,.5,-10);
     sidewalk4.material = sidewalk1.material
     sidewalk4.checkCollisions = true;
 
@@ -293,6 +573,8 @@
     sidewalk2.parent = nullObj;
     sidewalk3.parent = nullObj;
     sidewalk4.parent = nullObj;
+
+
     /* End Create Scenery */
 
     //Gravity and Collisions Enabled
@@ -307,6 +589,8 @@
 
     camera.ellipsoid = new BABYLON.Vector3(0.5, 3, 0.5);
     camera.ellipsoidOffset = new BABYLON.Vector3(0, 1, 0);
+
+
 
 
 
@@ -343,16 +627,16 @@
         advancedTexture.addControl(search);
         
 
-    // Create the 3D UI manager for door enter buttons
+    // Create the 3D UI manager
     var manager = new BABYLON.GUI.GUI3DManager(scene);
     var anchor = new BABYLON.AbstractMesh("anchor", scene);
-    anchor.parent = nullObj;
+    //anchor.parent = nullObj;
     anchor.position.z = 0;
     // add 3d buttons
     var z = 30;
     var z2 = 30;
     var buttons = [];
-    for(var i = 0; i<5; i++) {
+    for(var i = 0; i<1; i++) {
         var newButton1 = new BABYLON.GUI.HolographicButton("enter" + i);
         var newButton2 = new BABYLON.GUI.HolographicButton("enter" + i);
         buttons.push(newButton1);
@@ -361,15 +645,15 @@
         manager.addControl(newButton2);
         newButton1.linkToTransformNode(anchor);
         newButton2.linkToTransformNode(anchor);
-        newButton1.position = new BABYLON.Vector3(43, 5, z-=30);
-        newButton2.position = new BABYLON.Vector3(-43, 5, z2-=30);
+        newButton1.position = new BABYLON.Vector3(40, 6.2, z-=60.4);
+        newButton2.position = new BABYLON.Vector3(-43, 6.2, z2-=60.5);
         newButton1.node.rotation.y = 1.5;
         newButton2.node.rotation.y = -1.5;
 
         newButton1.text = "ENTER";
         //button.imageUrl = "./textures/down.png";
         newButton1.onPointerUpObservable.add(function(){
-            window.location.href = "/video.html";
+            window.location.href = "/videoFashion.html";
         });
         newButton2.text = "ENTER";
         //button.imageUrl = "./textures/down.png";
@@ -382,10 +666,9 @@
 
     
 
-    /* New Input Management for Camera 
+    /* New Input Management for Camera
     __________________________________*/
-    
-    //Preset for custom controls. Found from this playground https://playground.babylonjs.com/#CTCSWQ#1
+
     //First remove the default management.
     camera.inputs.removeByType("FreeCameraKeyboardMoveInput");
     camera.inputs.removeByType("FreeCameraMouseInput");
