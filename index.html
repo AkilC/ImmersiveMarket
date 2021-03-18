@@ -255,10 +255,14 @@
                 });
             }
             //scene.executeWhenReady(function () {
-            var galleryBuilding = BABYLON.SceneLoader.Append("/models/NewGallery3.25Ext.glb", "", scene, function (scene) {
+            var galleryBuilding = BABYLON.SceneLoader.Append("/models/NewGallery3.3Ext.glb", "", scene, function (scene) {
                 var root1 = scene.getNodeByName("__root__");
                 root1.name = "gallery";
                 root1.position = new BABYLON.Vector3(-90,1,-28);
+
+                var wallsOuter = scene.getMeshByName("Cube.005");
+                wallsOuter.position = new BABYLON.Vector3(-0.46, 14, -0.89);
+                wallsOuter.scaling.y = -13.8;
 
                 var doorlight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(-50,90,-40), new BABYLON.Vector3(0, -1, 0), Math.PI / 2, 13, scene);
                 doorlight.diffuse = new BABYLON.Color3(1, 1, 0);
@@ -322,7 +326,7 @@
         //});
 
 
-        var fashionBuilding = BABYLON.SceneLoader.Append("/models/FashionStore3.26.glb", "", scene, function (scene) {
+        var fashionBuilding = BABYLON.SceneLoader.Append("/models/FashionStore4.2.glb", "", scene, function (scene) {
             var root = scene.getNodeByName("__root__");
             root.name = "fashion";
 
