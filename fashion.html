@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" http-equiv="Content-Type" content="text/html, charset=utf-8" />
+
+        <title>Fashion</title>
+
+        <!-- Babylon.js -->
+        <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://cdn.babylonjs.com/ammo.js"></script>
+        <script src="https://cdn.babylonjs.com/cannon.js"></script>
+        <script src="https://cdn.babylonjs.com/Oimo.js"></script>
+        <script src="https://cdn.babylonjs.com/earcut.min.js"></script>
+        <script src="https://cdn.babylonjs.com/babylon.js"></script>
+        <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://cdn.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://cdn.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://cdn.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://cdn.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/6.4.5/swiper-bundle.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/6.4.5/swiper-bundle.css">
+
+        <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+        <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+                outline: none;
+                position: absolute;
+            }
+
+            #gallery-wrapper {
+                position: block;
+                opacity: 0;
+            }
+
+            #gallery-box{
+                position: absolute;
+                width: 100vw;
+                height: 100vh;
+                z-index: 2000;
+                background-color: #000000;
+                opacity: 50%;
+                top: 50%;  /* position the top  edge of the element at the middle of the parent */
+                left: 50%; /* position the left edge of the element at the middle of the parent */
+                transform: translate(-50%, -50%); /* center */
+            }
+
+            .swiper-container {
+                position: absolute;
+                width: 60vw;
+                height: 60vh;
+                top: 50%;  /* position the top  edge of the element at the middle of the parent */
+                left: 50%; /* position the left edge of the element at the middle of the parent */
+                transform: translate(-50%, -50%); /* center */
+                z-index: 3000;
+            }
+
+                .swiper-slide {
+                text-align: center;
+                font-size: 18px;
+                background: #fff;
+
+                /* Center slide text vertically */
+                display: -webkit-box;
+                display: -ms-flexbox;
+                display: -webkit-flex;
+                display: flex;
+                -webkit-box-pack: center;
+                -ms-flex-pack: center;
+                -webkit-justify-content: center;
+                justify-content: center;
+                -webkit-box-align: center;
+                -ms-flex-align: center;
+                -webkit-align-items: center;
+                align-items: center;
+            }
+
+            #model {
+                position: absolute;
+                background-color: #fff;
+                width: 100%;
+                height: 100%;
+                top: 50%;  /* position the top  edge of the element at the middle of the parent */
+                left: 50%; /* position the left edge of the element at the middle of the parent */
+                transform: translate(-50%, -50%); /* center */
+                z-index: 3000;
+            }
+            #qr {
+                position: absolute;
+                width: 80px;
+                height: 80px;
+                top: 25px;
+                right: 20px;
+                z-index: 9999999;
+            }
+
+            #qr-text {
+                position: absolute;
+                font-family: Arial, Helvetica, sans-serif;
+                font-weight: bold;
+                font-size: 12px;
+                top: 0;
+                right: 5px;
+                z-index: 9999999;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }); };
+        var createScene = function () {
+    var scene = new BABYLON.Scene(engine);
+
+   scene.clearColor = new BABYLON.Color3(0.7, 0.7, 0.7);
+   //scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+
+
+
+   scene.debugLayer.show({embedMode: true, handleResize: true, enableClose: true, enablePopup: true, overlay: true});
+
+    var light = new BABYLON.PointLight("Light", new BABYLON.Vector3(0,30,0), scene);
+    light.intensity = 1200;
+
+    var light2 = new BABYLON.PointLight("Light", new BABYLON.Vector3(0,30,0), scene);
+    light2.intensity = 1200;
+
+
+    //Add the camera, to be shown as a cone and surrounding collision volume
+    var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(1.25, 5.116, -52.43), scene);
+    camera.minZ = 0.01;
+    camera.attachControl(canvas, true);
+    camera.speed = 0.03;
+    camera.angularSpeed = 0.04;
+    camera.angle = Math.PI/2;
+    camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
+
+
+    var fashionBuilding = BABYLON.SceneLoader.Append("/models/FashionStore3.4.glb", "", scene, function (scene) {
+        var root2 = scene.getNodeByName("__root__");
+        root2.name = "fashion";
+        root2.position = new BABYLON.Vector3(0,-.1,0);
+
+        root2.getChildMeshes().forEach(m => {
+            //m.checkCollisions = true;
+        });
+
+
+        const glass = new BABYLON.PBRMetallicRoughnessMaterial('glass', scene)
+        glass.baseColor = new BABYLON.Color3(0.78, 0.82, 0.85)
+        glass.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0.4)
+        glass.metallic = 1.0
+        glass.roughness = 0.2
+        glass.alpha = 0.2
+
+        var hatbox = scene.getMeshByName("hatBox");
+        hatbox.material = glass;
+
+        var hatbox2 = scene.getMeshByName("hatBox2");
+        hatbox2.material = glass;
+
+        var glassdoor1 = scene.getMeshByName("Glass");
+        var glassdoor2 = scene.getMeshByName("Glass.002");
+        var windows = scene.getMeshByName("Plane.002");
+
+        glassdoor1.material = glass;
+        glassdoor2.material = glass;
+        windows.material = glass;
+
+        var walls = scene.getMeshByName("Cube.001");
+        walls.material.emissiveColor = new BABYLON.Vector3(.3, 0.3, 0.3);
+
+        var wallsOuter = scene.getMeshByName("Cube.005");
+        wallsOuter.scaling = new BABYLON.Vector3(56.5, -13.628, 57.5);
+
+        var wallbound = scene.getMeshByName("Barrier");
+        var statueBound = scene.getMeshByName("hatStand2.001");
+
+        wallbound.flipFaces(true);
+
+        wallbound.visibility = 0;
+        statueBound.visibility = 0;
+
+        var hatStand1 = scene.getMeshByName("hatStand1");
+        var hatStand2 = scene.getMeshByName("hatStand2");
+
+        hatStand1.checkCollisions = true;
+        hatStand2.checkCollisions = true;
+
+
+        wallsOuter.checkCollisions= true;
+        wallbound.checkCollisions = true;
+        statueBound.checkCollisions = true;
+
+        var planeOpts = {
+			height: 7, 
+			width: 10, 
+			sideOrientation: BABYLON.Mesh.DOUBLESIDE
+        };
+        var videoPlane = BABYLON.MeshBuilder.CreatePlane("plane", planeOpts, scene);
+        var vidPos = (new BABYLON.Vector3(2.41, 18.915, 54.989));
+        videoPlane.position = vidPos;
+        var videoMat = new BABYLON.StandardMaterial("m", scene);
+        var videoTexture = new BABYLON.VideoTexture("vidtex","/images/B__Dove.mp4", scene);
+        videoMat.diffuseTexture = videoTexture;
+        videoMat.roughness = 1;
+        videoMat.emissiveColor = new BABYLON.Color3.White();
+        videoPlane.material = videoMat;
+        videoPlane.scaling = new BABYLON.Vector3(1.342, 1.138, 1.0);
+        scene.onPointerObservable.add(function(evt){
+		if(evt.pickInfo.pickedMesh === videoPlane){
+                //console.log("picked");
+					if(videoTexture.video.paused)
+						videoTexture.video.play();
+					else
+						videoTexture.video.pause();
+                    console.log(videoTexture.video.paused?"paused":"playing");
+			}
+	    }, BABYLON.PointerEventTypes.POINTERPICK);
+
+    //videoPlane.parent = root2;
+
+        light.excludedMeshes.push(videoPlane, glassdoor1, glassdoor2, windows);
+
+        var statue = scene.getMeshByName("statueBlock");
+        statue.name = "statue";
+
+        var floorMat = scene.getMaterialByName("Material.002");
+
+        var hatStand1 = scene.getMeshByName("hatStand1");
+        var hatStand2 = scene.getMeshByName("hatStand2");
+        var cloRack1 = scene.getMeshByName("CloRack1");
+        var cloRack2 = scene.getMeshByName("CloRack2");
+        var tvBack = scene.getMeshByName("TV-Back");
+        var dove = scene.getMeshByName("Dove");
+
+        floorMat.reflectionTexture = new BABYLON.MirrorTexture("mirror", {ratio: 0.5}, scene, true);
+        floorMat.reflectionTexture.mirrorPlane = new BABYLON.Plane(0, -2.0, 0, -2.0);
+        //floorMat.reflectionTexture.renderList = [statue, hatStand1, hatStand2, cloRack1, cloRack2];
+        floorMat.reflectionTexture.level = 1.0;
+        floorMat.reflectionTexture.adaptiveBlurKernel = 50;
+        floorMat.emissiveColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+        floorMat.metallic = 0.5;
+
+        var glowParent = new BABYLON.TransformNode("master");
+
+        var purple1 = scene.getMeshByName("Purple1");
+        var purple2 = scene.getMeshByName("Purple.001");
+        var purple3 = scene.getMeshByName("Purple2");
+        var purple4 = scene.getMeshByName("Purple2.001");
+        var purple5 = scene.getMeshByName("Purple3");
+        var purple6 = scene.getMeshByName("Purple3.001");
+        var purple7 = scene.getMeshByName("Purple4");
+        var purple8 = scene.getMeshByName("Purple4.001");
+
+
+        var gl = new BABYLON.GlowLayer("glow", scene);
+        gl.intensity = 0.7;
+        gl.addExcludedMesh(videoPlane);
+        gl.addExcludedMesh(hatbox);
+        gl.addExcludedMesh(hatbox2);
+
+        var glowMat = scene.getMaterialByName("Material");
+        var whiteGlow = new BABYLON.Color3(.7, .7, .7);
+        var purpleGlow = new BABYLON.Color3(.28, .25, .35);
+        glowMat.emissiveColor = whiteGlow;
+
+        var glowAnim = new BABYLON.Animation("glowAnim", "material.emissiveColor", 30, BABYLON.Animation.ANIMATIONTYPE_COLOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        const glowkeyFrames = []; 
+
+        glowkeyFrames.push({
+            frame: 0,
+            value: whiteGlow
+        });
+
+        glowkeyFrames.push({
+            frame: 100,
+            value: whiteGlow
+        });
+
+        glowkeyFrames.push({
+            frame: 200,
+            value: purpleGlow
+        });
+        glowkeyFrames.push({
+            frame: 400,
+            value: purpleGlow
+        });
+        glowkeyFrames.push({
+            frame: 500,
+            value: whiteGlow
+        });
+
+        glowAnim.setKeys(glowkeyFrames);
+        purple1.animations.push(glowAnim);
+
+        scene.beginAnimation(purple1, 0, 500, true);
+
+
+        //mirror.position = new BABYLON.Vector3(0, 1, 0);
+
+        light.excludedMeshes.push(cloRack2, cloRack1, statue, dove);
+        light2.includedOnlyMeshes.push(cloRack2, cloRack1, statue, dove);
+
+        // Shadow
+        //shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+        //shadowGenerator.getShadowMap().renderList.push(statue);
+        //shadowGenerator.setDarkness(0.5);
+        //shadowGenerator.usePoissonSampling = true;
+        //shadowGenerator.bias = 0;
+        //statue.receiveShadows = true;
+
+        var shirt1 = scene.getMeshByName("Shirt1");
+    
+        shirt1.actionManager = new BABYLON.ActionManager(scene);
+
+        shirt1.actionManager.registerAction(
+            new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
+            function(event){
+                var pickedMesh = event.meshUnderPointer; 
+
+                var x = document.getElementById("gallery-wrapper");
+
+                x.style.display = "block";
+                x.style.opacity = "100%";
+            })
+        )
+        var shirt2 = scene.getMeshByName("Shirt2");
+    
+        shirt2.actionManager = new BABYLON.ActionManager(scene);
+
+        shirt2.actionManager.registerAction(
+            new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
+            function(event){
+                var pickedMesh = event.meshUnderPointer; 
+
+                var x = document.getElementById("gallery-wrapper");
+
+                x.style.display = "block";
+                x.style.opacity = "100%";
+            })
+        )
+
+        var shirt3 = scene.getMeshByName("Shirt3");
+    
+        shirt3.actionManager = new BABYLON.ActionManager(scene);
+
+        shirt3.actionManager.registerAction(
+            new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
+            function(event){
+                var pickedMesh = event.meshUnderPointer; 
+
+                var x = document.getElementById("gallery-wrapper");
+
+                x.style.display = "block";
+                x.style.opacity = "100%";
+            })
+        )
+
+        var shirt4 = scene.getMeshByName("Shirt4");
+    
+        shirt4.actionManager = new BABYLON.ActionManager(scene);
+
+        shirt4.actionManager.registerAction(
+            new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
+            function(event){
+                var pickedMesh = event.meshUnderPointer; 
+
+                var x = document.getElementById("gallery-wrapper");
+
+                x.style.display = "block";
+                x.style.opacity = "100%";
+            })
+        )
+
+        var shirt5 = scene.getMeshByName("Shirt5");
+    
+        shirt5.actionManager = new BABYLON.ActionManager(scene);
+
+        shirt5.actionManager.registerAction(
+            new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
+            function(event){
+                var pickedMesh = event.meshUnderPointer; 
+
+                var x = document.getElementById("gallery-wrapper");
+
+                x.style.display = "block";
+                x.style.opacity = "100%";
+            })
+        )
+
+        var shirt6 = scene.getMeshByName("Shirt6");
+    
+        shirt6.actionManager = new BABYLON.ActionManager(scene);
+
+        shirt6.actionManager.registerAction(
+            new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
+            function(event){
+                var pickedMesh = event.meshUnderPointer; 
+
+                var x = document.getElementById("gallery-wrapper");
+
+                x.style.display = "block";
+                x.style.opacity = "100%";
+            })
+        )
+
+        light.excludedMeshes.push(cloRack2, cloRack1, statue, dove, shirt1, shirt2, shirt3, shirt4, shirt5, shirt6);
+        light2.includedOnlyMeshes.push(cloRack2, cloRack1, statue, dove, shirt1, shirt2, shirt3, shirt4, shirt5, shirt6);
+        floorMat.reflectionTexture.renderList = [statue, hatStand1, hatStand2, cloRack1, cloRack2, shirt1, shirt2, shirt3, shirt4, shirt5, shirt6];
+    });
+
+    var zvalue = 0;
+    var zvalue2 = 0;
+    var nullObj = new BABYLON.TransformNode("master");
+    scene.executeWhenReady(function () {
+        BABYLON.SceneLoader.Append("/models/store-box2.glb", "", scene, function (scene) {
+            var root = scene.getNodeByName('__root__');
+            root.name = "build";
+            var root = scene.getNodeByName("build");
+
+                var building = scene.getMeshByName("store.box_primitive0");
+                var name = scene.getMeshByName("store.box_primitive1");
+                building.checkCollisions = true;
+                building.scaling = new BABYLON.Vector3(16,16,16);
+                name.scaling = new BABYLON.Vector3(16,16,16);
+                root.position = new BABYLON.Vector3(55,8,zvalue);
+                building.rotation.y = 1.571;
+                name.rotation.y = 1.571;
+                root.parent = nullObj;
+
+                var buildings = [root];
+                for (var i = 1; i < 5; i++) {
+                    var newBuildingL = root.clone("root" + i);
+                    var newBuildingR = root.clone("root" + i);
+                    newBuildingR.rotation = new BABYLON.Vector3(0,0,0);
+
+                    buildings.push(newBuildingL);
+                    buildings.push(newBuildingR);
+
+                    newBuildingL.position = new BABYLON.Vector3(55,8,zvalue-=30);
+                    newBuildingR.position = new BABYLON.Vector3(-55,8,zvalue2-=30);
+                }
+                var buildingOneR = root.clone("root" + i);
+                buildingOneR.rotation = new BABYLON.Vector3(0,0,0);
+                buildings.push(buildingOneR);
+                buildingOneR.position = new BABYLON.Vector3(-55,8,0);
+            });
+        nullObj.position = new BABYLON.Vector3(300,0,-100); 
+        nullObj.rotation.y = 1.571; 
+    });
+
+    var galleryBuilding = BABYLON.SceneLoader.Append("/models/NewGallery3.25.glb", "", scene, function (scene) {
+                var root1 = scene.getNodeByName("__root__");
+                root1.name = "gallery";
+                root1.position = new BABYLON.Vector3(0, 0,-200);
+                root1.rotation = new BABYLON.Vector3(0, 1.58,0);
+
+                var doorlight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(-50,90,0), new BABYLON.Vector3(0, -1, 0), Math.PI / 2, 13, scene);
+                doorlight.parent = root1;
+                doorlight.diffuse = new BABYLON.Color3(1, 1, 0);
+                doorlight.specular = new BABYLON.Color3(0, 0, 1);
+                var light3 = new BABYLON.PointLight("Light3", new BABYLON.Vector3(-100,30,-30), scene);
+                light3.parent = root1;
+                light3.intensity = 15;
+
+                root1.getChildMeshes().forEach(m => {
+                    m.checkCollisions = true;
+                    light3.includedOnlyMeshes.push(m);
+                });
+
+
+                const glass2 = new BABYLON.PBRMetallicRoughnessMaterial('glass', scene)
+                glass2.baseColor = new BABYLON.Color3(0.78, 0.82, 0.85)
+                glass2.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0.2)
+                glass2.metallic = 1.0
+                glass2.roughness = 0.2
+                glass2.alpha = 0.2
+
+                var doors = scene.getMeshByName("GlassDoors");
+                doors.material = glass2;
+
+                var roof = scene.getMeshByName("celling");
+                var walls = scene.getMeshByName("walls_exterior");
+
+                //walls.material.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+                walls.material.albedoColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+
+                var signBox = scene.getMeshByName("signBox");
+                var signMaterial = new BABYLON.StandardMaterial("sign", scene);
+                signMaterial.emissiveColor = new BABYLON.Color3(0, 0, 0);
+                signMaterial.albedoColor = new BABYLON.Color3(0, 0, 0);
+                signBox.material.albedoColor = new BABYLON.Color3(0, 0, 0);
+
+                var gallerySign = scene.getMeshByName("FarEast");
+                gallerySign.material.emissiveColor = new BABYLON.Color3(1,1,1);
+
+                var bulb1 = scene.getMeshByName("bulb1");
+                bulb1.material.emissiveColor = new BABYLON.Vector3(1,1, .5)
+
+
+                light3.excludedMeshes.push(boxCloud);
+
+
+                //light.excludedMeshes.push(floor);
+                //light2.excludedMeshes.push(boxCloud);
+            });
+
+
+    //clouds
+    var boxCloud = BABYLON.Mesh.CreateSphere("boxCloud", 1000, 1000, scene);
+    boxCloud.position = new BABYLON.Vector3(0, 0, 12);
+    var cloudMaterial = new BABYLON.StandardMaterial("cloudMat", scene);
+    var cloudProcText = new BABYLON.CloudProceduralTexture("cloud", 1024, scene);
+    cloudMaterial.emissiveTexture = cloudProcText;
+    cloudMaterial.backFaceCulling = false;
+    cloudMaterial.emissiveTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+    boxCloud.material = cloudMaterial;
+
+    boxCloud.rotation.x = 120;
+
+        var lightAnim = new BABYLON.Animation("lightAnim", "diffuse", 30, BABYLON.Animation.ANIMATIONTYPE_COLOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        var whiteLight = new BABYLON.Color3(1, 1, 1);
+        var purpleLight = new BABYLON.Color3(.5, .1, .7);
+        //light.diffuse = purpleLight;
+        const lightkeyFrames = []; 
+
+        lightkeyFrames.push({
+            frame: 0,
+            value: whiteLight
+        });
+
+        lightkeyFrames.push({
+            frame: 100,
+            value: whiteLight
+        });
+
+        lightkeyFrames.push({
+            frame: 200,
+            value: purpleLight
+        });
+        lightkeyFrames.push({
+            frame: 400,
+            value: purpleLight
+        });
+        lightkeyFrames.push({
+            frame: 500,
+            value: whiteLight
+        });
+
+        lightAnim.setKeys(lightkeyFrames);
+        light.animations.push(lightAnim);
+
+        scene.beginAnimation(light, 0, 500, true);
+
+
+    
+    //camera.rotation.y += Math.PI;
+
+
+    //Dummy camera as cone
+
+    /* Set Up Scenery
+    _____________________*/
+
+    //Ground
+    var ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 1000, height: 1000}, scene);
+    ground.material = new BABYLON.StandardMaterial("groundMat", scene);
+    ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    ground.material.backFaceCulling = false;
+
+    var lowerGround = ground.clone("lowerGround");
+    lowerGround.scaling.x = 4;
+    lowerGround.scaling.z = 4;
+    lowerGround.position.y = -16;
+    lowerGround.material = ground.material.clone("lowerMat");
+    lowerGround.material.diffuseColor = new BABYLON.Color3(0, 1, 0);
+    
+
+    /* End Create Scenery */
+
+    //Gravity and Collisions Enabled
+    scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
+    scene.collisionsEnabled = true;
+
+    camera.checkCollisions = true;
+    camera.applyGravity = true;
+
+    ground.checkCollisions = true;
+    lowerGround.checkCollisions = true;
+
+    camera.ellipsoid = new BABYLON.Vector3(0.5, 3, 0.5);
+    camera.ellipsoidOffset = new BABYLON.Vector3(0, 1, 0);
+
+    var groundlight = new BABYLON.HemisphericLight("groundLight", new BABYLON.Vector3(0,30,0), scene);
+    groundlight.intensity = 0.7;
+    light.excludedMeshes.push(ground);
+    groundlight.includedOnlyMeshes.push(ground);
+
+    var manager = new BABYLON.GUI.GUI3DManager(scene);
+    var anchor = new BABYLON.AbstractMesh("anchor", scene);
+    //anchor.parent = nullObj;
+    anchor.position.z = 0;
+
+
+        var newButton1 = new BABYLON.GUI.HolographicButton("exit");
+
+        manager.addControl(newButton1);
+
+        newButton1.linkToTransformNode(anchor);
+
+        newButton1.position = new BABYLON.Vector3(-0.2, 5, -57.5);
+
+        newButton1.node.rotation.y = 3;
+
+        newButton1.text = "EXIT";
+        //button.imageUrl = "./textures/down.png";
+        newButton1.onPointerUpObservable.add(function(){
+            window.location.href = "/outside.html";
+        });
+
+
+
+    /* New Input Management for Camera
+    __________________________________*/
+
+    //First remove the default management.
+    camera.inputs.removeByType("FreeCameraKeyboardMoveInput");
+    camera.inputs.removeByType("FreeCameraMouseInput");
+
+    //Key Input Manager To Use Keys to Move Forward and BackWard and Look to the Left or Right
+    var FreeCameraKeyboardWalkInput = function () {
+        this._keys = [];
+        this.keysUp = [38];
+        this.keysDown = [40];
+        this.keysLeft = [37];
+        this.keysRight = [39];
+        this.keysSpace = [32];
+    }
+
+    //Add attachment controls
+    FreeCameraKeyboardWalkInput.prototype.attachControl = function (noPreventDefault) {
+            var _this = this;
+            var engine = this.camera.getEngine();
+            var element = engine.getInputElement();
+            if (!this._onKeyDown) {
+                element.tabIndex = 1;
+                this._onKeyDown = function (evt) {
+                    if (_this.keysUp.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysDown.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysLeft.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysRight.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysSpace.indexOf(evt.keyCode) !== -1 ) {
+                        var index = _this._keys.indexOf(evt.keyCode);
+                        if (index === -1) {
+                            _this._keys.push(evt.keyCode);
+                        }
+                        if (!noPreventDefault) {
+                            evt.preventDefault();
+                        }
+                    }
+                };
+                this._onKeyUp = function (evt) {
+                    if (_this.keysUp.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysDown.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysLeft.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysRight.indexOf(evt.keyCode) !== -1 ||
+                        _this.keysSpace.indexOf(evt.keyCode) !== -1 ) {
+                        var index = _this._keys.indexOf(evt.keyCode);
+                        if (index >= 0) {
+                            _this._keys.splice(index, 1);
+                        }
+                        if (!noPreventDefault) {
+                            evt.preventDefault();
+                        }
+                    }
+                };
+                element.addEventListener("keydown", this._onKeyDown, false);
+                element.addEventListener("keyup", this._onKeyUp, false);
+            }
+        };
+
+
+        //Add detachment controls
+        FreeCameraKeyboardWalkInput.prototype.detachControl = function () {
+            var engine = this.camera.getEngine();
+            var element = engine.getInputElement();
+            if (this._onKeyDown) {
+                element.removeEventListener("keydown", this._onKeyDown);
+                element.removeEventListener("keyup", this._onKeyUp);
+                BABYLON.Tools.UnregisterTopRootEvents([
+                    { name: "blur", handler: this._onLostFocus }
+                ]);
+                this._keys = [];
+                this._onKeyDown = null;
+                this._onKeyUp = null;
+            }
+        };
+
+        //Keys movement control by checking inputs
+        FreeCameraKeyboardWalkInput.prototype.checkInputs = function () {
+            if (this._onKeyDown) {
+                var camera = this.camera;
+                for (var index = 0; index < this._keys.length; index++) {
+                    var keyCode = this._keys[index];
+                    var speed = camera.speed;
+                    if (this.keysLeft.indexOf(keyCode) !== -1) {
+                        camera.rotation.y -= camera.angularSpeed;
+                        camera.direction.copyFromFloats(0, 0, 0);
+                    }
+                    else if (this.keysUp.indexOf(keyCode) !== -1) {
+                        camera.direction.copyFromFloats(0, 0, speed);
+                    }
+                    else if (this.keysRight.indexOf(keyCode) !== -1) {
+                        camera.rotation.y += camera.angularSpeed;
+                        camera.direction.copyFromFloats(0, 0, 0);
+                    }
+                    else if (this.keysDown.indexOf(keyCode) !== -1) {
+                        camera.direction.copyFromFloats(0, 0, -speed);
+                    } else if (this.keysSpace.indexOf(keyCode) !== -1) {
+                        camera.position.y += 1;
+                        camera.direction.copyFromFloats(0, 0, 0);
+                    }
+                    if (camera.getScene().useRightHandedSystem) {
+                        camera.direction.z *= -1;
+                    }
+                    camera.getViewMatrix().invertToRef(camera._cameraTransformMatrix);
+                    BABYLON.Vector3.TransformNormalToRef(camera.direction, camera._cameraTransformMatrix, camera._transformedDirection);
+                    camera.cameraDirection.addInPlace(camera._transformedDirection);
+                }
+            }
+        };
+
+        //Add the onLostFocus function
+        FreeCameraKeyboardWalkInput.prototype._onLostFocus = function (e) {
+            this._keys = [];
+        };
+
+        //Add the two required functions for the control Name
+        FreeCameraKeyboardWalkInput.prototype.getClassName = function () {
+            return "FreeCameraKeyboardWalkInput";
+        };
+
+        FreeCameraKeyboardWalkInput.prototype.getSimpleName = function () {
+            return "keyboard";
+        };
+
+    //Add the new keys input manager to the camera.
+     camera.inputs.add(new FreeCameraKeyboardWalkInput());
+
+
+
+    //The Mouse Manager to use the mouse (touch) to search around including above and below
+    var FreeCameraSearchInput = function (touchEnabled) {
+        if (touchEnabled === void 0) { touchEnabled = true; }
+        this.touchEnabled = touchEnabled;
+        this.buttons = [0, 1, 2];
+        this.angularSensibility = 2000.0;
+        this.restrictionX = 100;
+        this.restrictionY = 60;
+    }
+
+    //add attachment control which also contains the code to react to the input from the mouse
+    FreeCameraSearchInput.prototype.attachControl = function (noPreventDefault) {
+        var _this = this;
+        var engine = this.camera.getEngine();
+        var element = engine.getInputElement();
+        var angle = {x:0, y:0};
+        if (!this._pointerInput) {
+            this._pointerInput = function (p, s) {
+                var evt = p.event;
+                if (!_this.touchEnabled && evt.pointerType === "touch") {
+                    return;
+                }
+                if (p.type !== BABYLON.PointerEventTypes.POINTERMOVE && _this.buttons.indexOf(evt.button) === -1) {
+                    return;
+                }
+                if (p.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                    try {
+                        evt.srcElement.setPointerCapture(evt.pointerId);
+                    }
+                    catch (e) {
+                        //Nothing to do with the error. Execution will continue.
+                    }
+                    _this.previousPosition = {
+                        x: evt.clientX,
+                        y: evt.clientY
+                    };
+                    if (!noPreventDefault) {
+                        evt.preventDefault();
+                        element.focus();
+                    }
+                }
+                else if (p.type === BABYLON.PointerEventTypes.POINTERUP) {
+                    try {
+                        evt.srcElement.releasePointerCapture(evt.pointerId);
+                    }
+                    catch (e) {
+                        //Nothing to do with the error.
+                    }
+                    _this.previousPosition = null;
+                    if (!noPreventDefault) {
+                        evt.preventDefault();
+                    }
+                }
+                else if (p.type === BABYLON.PointerEventTypes.POINTERMOVE) {
+                    if (!_this.previousPosition || engine.isPointerLock) {
+                        return;
+                    }
+                    var offsetX = evt.clientX - _this.previousPosition.x;
+                    var offsetY = evt.clientY - _this.previousPosition.y;
+                    angle.x +=offsetX;
+                    angle.y -=offsetY;
+                    if(Math.abs(angle.x) > _this.restrictionX )  {
+                        angle.x -=offsetX;
+                    }
+                    if(Math.abs(angle.y) > _this.restrictionY )  {
+                        angle.y +=offsetY;
+                    }
+                    if (_this.camera.getScene().useRightHandedSystem) {
+                        if(Math.abs(angle.x) < _this.restrictionX )  {
+                            _this.camera.cameraRotation.y -= offsetX / _this.angularSensibility;
+                        }
+                    }
+                    else {
+                        if(Math.abs(angle.x) < _this.restrictionX )  {
+                            _this.camera.cameraRotation.y += offsetX / _this.angularSensibility;
+                        }
+                    }
+                    if(Math.abs(angle.y) < _this.restrictionY )  {
+                        _this.camera.cameraRotation.x += offsetY / _this.angularSensibility;
+                    }
+                    _this.previousPosition = {
+                        x: evt.clientX,
+                        y: evt.clientY
+                    };
+                    if (!noPreventDefault) {
+                        evt.preventDefault();
+                    }
+                }
+            };
+        }
+        this._onSearchMove = function (evt) {
+            if (!engine.isPointerLock) {
+                return;
+            }
+            var offsetX = evt.movementX || evt.mozMovementX || evt.webkitMovementX || evt.msMovementX || 0;
+            var offsetY = evt.movementY || evt.mozMovementY || evt.webkitMovementY || evt.msMovementY || 0;
+            if (_this.camera.getScene().useRightHandedSystem) {
+                _this.camera.cameraRotation.y -= offsetX / _this.angularSensibility;
+            }
+            else {
+                _this.camera.cameraRotation.y += offsetX / _this.angularSensibility;
+            }
+            _this.camera.cameraRotation.x += offsetY / _this.angularSensibility;
+            _this.previousPosition = null;
+            if (!noPreventDefault) {
+                evt.preventDefault();
+            }
+        };
+        this._observer = this.camera.getScene().onPointerObservable.add(this._pointerInput, BABYLON.PointerEventTypes.POINTERDOWN | BABYLON.PointerEventTypes.POINTERUP | BABYLON.PointerEventTypes.POINTERMOVE);
+        element.addEventListener("mousemove", this._onSearchMove, false);
+    };
+
+    //Add detachment control
+    FreeCameraSearchInput.prototype.detachControl = function () {
+        var engine = this.camera.getEngine();
+        var element = engine.getInputElement();
+        if (this._observer && element) {
+            this.camera.getScene().onPointerObservable.remove(this._observer);
+            element.removeEventListener("mousemove", this._onSearchMove);
+            this._observer = null;
+            this._onSearchMove = null;
+            this.previousPosition = null;
+        }
+    };
+
+    //Add the two required functions for names
+    FreeCameraSearchInput.prototype.getClassName = function () {
+        return "FreeCameraSearchInput";
+    };
+
+    FreeCameraSearchInput.prototype.getSimpleName = function () {
+        return "MouseSearchCamera";
+    };
+
+    //Add the new mouse input manager to the camera
+    camera.inputs.add(new FreeCameraSearchInput());
+
+
+
+    return scene;
+}
+    var engine;
+    try {
+    engine = createDefaultEngine();
+    } catch(e) {
+    console.log("the available createEngine function failed. Creating the default engine instead");
+    engine = createDefaultEngine();
+    }
+        if (!engine) throw 'engine should not be null.';
+        scene = createScene();;
+        sceneToRender = scene
+
+        engine.runRenderLoop(function () {
+            if (sceneToRender && sceneToRender.activeCamera) {
+                sceneToRender.render();
+            }
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+        <!-- swiper -->
+
+        <div id="gallery-wrapper" class="galWrap">
+        <div id="gallery-box" onload="time()" onclick="hide()"></div>
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                <div class="swiper-slide" class="noSwipingClass">Slide 1</div>
+                    <model-viewer id="model" src="/images/cube-test.gltf" ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" camera-controls alt="test" ios-src="/images/cube-test.usdz">
+                    </model-viewer>
+                    <img id="qr" src="/images/QR-test.png">
+                    <h1 id="qr-text">Scan To View in AR</h1>
+                <div class="swiper-slide">Slide 2</div>
+                <div class="swiper-slide">Slide 3</div>
+                <div class="swiper-slide">Slide 4</div>
+                <div class="swiper-slide">Slide 5</div>
+                <div class="swiper-slide">Slide 6</div>
+                <div class="swiper-slide">Slide 7</div>
+                <div class="swiper-slide">Slide 8</div>
+                <div class="swiper-slide">Slide 9</div>
+                <div class="swiper-slide">Slide 10</div>
+                </div>
+                <!-- Add Pagination -->
+                <div class="swiper-pagination"></div>
+                <!-- Add Arrows -->
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+            </div> 
+        </div>   
+            <!-- Initialize Swiper -->
+            <script>
+                var swiper = new Swiper('.swiper-container', {
+                spaceBetween: 30,
+                centeredSlides: true,
+                allowTouchMove: false,
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                },
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                });
+
+                window.addEventListener("load", function(){
+                var x = document.getElementById("gallery-wrapper");
+                        setTimeout(function() {var x = document.getElementById("gallery-wrapper");x.style.display = "none";}, 1000);
+                })
+
+                function hide() {
+                    var x = document.getElementById("gallery-wrapper");
+                    var y = document.getElementsByClassName('galWrap');
+
+                    x.style.opacity = "0%";
+                    x.style.display = "none";
+                    
+                }
+            </script>
+        </div>>
+
+</body>
+</html>
