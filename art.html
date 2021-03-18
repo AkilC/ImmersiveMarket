@@ -3,7 +3,7 @@
     <head>
         <meta name="viewport" http-equiv="Content-Type" content="text/html, charset=utf-8" />
 
-        <title>Inside</title>
+        <title>Art</title>
 
         <!-- Babylon.js -->
         <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script>
@@ -132,22 +132,24 @@
         var createScene = function () {
     var scene = new BABYLON.Scene(engine);
 
-   scene.clearColor = new BABYLON.Color3(0.3, 0.6, 0.902);
+   scene.clearColor = new BABYLON.Color3(0.6, 0.6, 0.8);
    //scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
 
    scene.debugLayer.show({embedMode: true, handleResize: true, enableClose: true, enablePopup: true, overlay: true});
 
-    var light = new BABYLON.HemisphericLight("Light", new BABYLON.Vector3(0,0,0), scene);
-    light.intensity = 10;
+    var light = new BABYLON.HemisphericLight("Light1", new BABYLON.Vector3(0,0,0), scene);
+    light.intensity = 5;
 
-    var light2 = new BABYLON.HemisphericLight("Light", new BABYLON.Vector3(0,5,0), scene);
+    var light2 = new BABYLON.HemisphericLight("Light2", new BABYLON.Vector3(0,5,0), scene);
     light2.intensity = 2;
 
-    var light4 = new BABYLON.HemisphericLight("Light", new BABYLON.Vector3(0,5,0), scene);
+    var light3 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(20, 20, 100), scene);
+
+    var light4 = new BABYLON.HemisphericLight("Light4", new BABYLON.Vector3(0,5,0), scene);
     light4.intensity = 1;
 
     //Add the camera, to be shown as a cone and surrounding collision volume
-    var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(48, 5.116, -1.83), scene);
+    var camera = new BABYLON.UniversalCamera("MyCamera", new BABYLON.Vector3(45, 5.116, -1.83), scene);
     camera.minZ = 0.01;
     camera.attachControl(canvas, true);
     camera.speed = 0.03;
@@ -155,10 +157,9 @@
     camera.angle = Math.PI/2;
     camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
 
-
     camera.rotation.y = 447.8;
 
-    var galleryBuilding = BABYLON.SceneLoader.Append("/models/NewGallery2.9.glb", "", scene, function (scene) {
+    var galleryBuilding = BABYLON.SceneLoader.Append("/models/NewGallery3.25.glb", "", scene, function (scene) {
         var root = scene.getNodeByName("__root__");
         root.name = "gallery";
 
@@ -167,14 +168,226 @@
         });
 
         var floor = scene.getMeshByName("floor");
-        var floorMat = new BABYLON.StandardMaterial("floorMat", scene);
 
-        floorMat.diffuseColor = new BABYLON.Vector3(0.2, 0.2, 0.2);
-        floorMat.diffuseTexture = null;  
-        
+        floor.material.roughness = 1;
+        floor.material.metallic = 0.75;
+        floor.material.emissiveColor = new BABYLON.Color3(0, 0, 0);
+        floor.material.usePhysicalLightFalloff = false;
+
+        const glass = new BABYLON.PBRMetallicRoughnessMaterial('glass', scene)
+        glass.baseColor = new BABYLON.Color3(0.78, 0.82, 0.85)
+        glass.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0.2)
+        glass.metallic = 1.0
+        glass.roughness = 0.2
+        glass.alpha = 0.2
+
         light.excludedMeshes.push(floor);
-        //light2.excludedMeshes.push(boxCloud);
+        light2.excludedMeshes.push(floor);
+        var glassDoor = scene.getMeshByName("GlassDoors");
+        glassDoor.material = glass;
+        light.excludedMeshes.push(glassDoor);
+        light2.excludedMeshes.push(glassDoor);
     });
+
+    var fashionBuilding = BABYLON.SceneLoader.Append("/models/FashionStore3.26.glb", "", scene, function (scene) {
+            var root = scene.getNodeByName("__root__");
+            root.name = "fashion";
+
+            //var light2 = new BABYLON.PointLight("Light", new BABYLON.Vector3(0,35,0), scene);
+            //light2.intensity = 15;
+            var beloved = scene.getMeshByName("Curve.016");
+
+            root.getChildMeshes().forEach(l => {
+                if (l != beloved) {
+                    light.excludedMeshes.push(l);
+                    light2.includedOnlyMeshes.push(l);
+                }
+            });
+
+
+            root.position = new BABYLON.Vector3(200,1,0);
+            root.rotation = new BABYLON.Vector3(0,-1.58,0);
+
+            var glassdoor1 = scene.getMeshByName("Glass");
+            var glassdoor2 = scene.getMeshByName("Glass.002");
+            var windows = scene.getMeshByName("Plane.002");
+
+            var exteriorFashion = scene.getMeshByName("Cube.001");
+            exteriorFashion.material.backFaceCulling = true;
+
+            var exteriorFashion2 = scene.getMeshByName("Cube.005");
+            //exteriorFashion.flipFaces = true;
+            exteriorFashion.material.backFaceCulling = true;
+            //var exteriorFashion2 = exteriorFashion.clone("buildingColor");
+            //exteriorFashion2.position.z = -1;
+
+            var exteriorMat = new BABYLON.StandardMaterial("exteriorMat", scene);
+            exteriorMat.diffuseColor = new BABYLON.Color3(0,0,0);
+            exteriorMat.backFaceCulling = false;
+            exteriorMat.emissiveColor = new BABYLON.Color3(0,0,0);
+            //exteriorFashion2.scaling = new BABYLON.Vector3(59, -14.5, 58.5);
+            //exteriorFashion2.material = exteriorMat;
+
+
+            const glass = new BABYLON.PBRMetallicRoughnessMaterial('glass', scene)
+            glass.baseColor = new BABYLON.Color3(0.78, 0.82, 0.85)
+            glass.emissiveColor = new BABYLON.Color3(0.2, 0.2, 0.4)
+            glass.metallic = 1.0
+            glass.roughness = 0.2
+            glass.alpha = 0.2
+
+            glassdoor1.material = glass;
+            glassdoor2.material = glass;
+            windows.material = glass;
+
+            var hatbox = scene.getMeshByName("hatBox");
+            hatbox.material = glass;
+
+            var hatbox2 = scene.getMeshByName("hatBox2");
+            hatbox2.material = glass;
+
+            var walls = scene.getMeshByName("Cube.001");
+            walls.material.emissiveColor = new BABYLON.Vector3(.3, 0.3, 0.3);
+
+            var planeOpts = {
+                height: 7, 
+                width: 10, 
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE
+            };
+            var videoPlane = BABYLON.MeshBuilder.CreatePlane("plane", planeOpts, scene);
+            var vidPos = (new BABYLON.Vector3(254, 19.5, -1.8));
+            videoPlane.position = vidPos;
+            var videoMat = new BABYLON.StandardMaterial("m", scene);
+            var videoTexture = new BABYLON.VideoTexture("vidtex","/images/B__Dove.mp4", scene);
+            videoMat.diffuseTexture = videoTexture;
+            videoMat.roughness = 1;
+            videoMat.emissiveColor = new BABYLON.Color3.White();
+            videoPlane.material = videoMat;
+            videoPlane.scaling = new BABYLON.Vector3(1.342, 1.138, 1.0);
+            videoPlane.rotation = new BABYLON.Vector3(0, 1.58, 0);
+            scene.onPointerObservable.add(function(evt){
+			if(evt.pickInfo.pickedMesh === videoPlane){
+                        //console.log("picked");
+                            if(videoTexture.video.paused)
+                                videoTexture.video.play();
+                            else
+                                videoTexture.video.pause();
+                            console.log(videoTexture.video.paused?"paused":"playing");
+                    }
+            }, BABYLON.PointerEventTypes.POINTERPICK);
+
+            light2.excludedMeshes.push(videoPlane);
+            light.excludedMeshes.push(videoPlane);
+            light3.excludedMeshes.push(videoPlane);
+
+            var statue = scene.getMeshByName("statueBlock");
+            statue.name = "statue";
+
+            var floorMat = scene.getMaterialByName("Material.002");
+
+            var hatStand1 = scene.getMeshByName("hatStand1");
+            var hatStand2 = scene.getMeshByName("hatStand2");
+            var cloRack1 = scene.getMeshByName("CloRack1");
+            var cloRack2 = scene.getMeshByName("CloRack2");
+            var tvBack = scene.getMeshByName("TV-Back");
+            var dove = scene.getMeshByName("Dove");
+
+            floorMat.reflectionTexture = new BABYLON.MirrorTexture("mirror", {ratio: 0.5}, scene, true);
+            floorMat.reflectionTexture.mirrorPlane = new BABYLON.Plane(0, -2.0, 0, -2.0);
+            //floorMat.reflectionTexture.renderList = [statue, hatStand1, hatStand2, cloRack1, cloRack2];
+            floorMat.reflectionTexture.level = 1.0;
+            floorMat.reflectionTexture.adaptiveBlurKernel = 50;
+            floorMat.emissiveColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+
+            var glowParent = new BABYLON.TransformNode("master");
+
+            var purple1 = scene.getMeshByName("Purple1");
+            var purple2 = scene.getMeshByName("Purple.001");
+            var purple3 = scene.getMeshByName("Purple2");
+            var purple4 = scene.getMeshByName("Purple2.001");
+            var purple5 = scene.getMeshByName("Purple3");
+            var purple6 = scene.getMeshByName("Purple3.001");
+            var purple7 = scene.getMeshByName("Purple4");
+            var purple8 = scene.getMeshByName("Purple4.001");
+
+
+            var gl = new BABYLON.GlowLayer("glow", scene);
+            gl.intensity = 0.7;
+            gl.addExcludedMesh(videoPlane);
+            gl.addExcludedMesh(hatbox);
+            gl.addExcludedMesh(hatbox2);
+
+            var glowMat = scene.getMaterialByName("Material");
+            var whiteGlow = new BABYLON.Color3(.7, .7, .7);
+            var purpleGlow = new BABYLON.Color3(.28, .25, .35);
+            glowMat.emissiveColor = whiteGlow;
+
+            var glowAnim = new BABYLON.Animation("glowAnim", "material.emissiveColor", 30, BABYLON.Animation.ANIMATIONTYPE_COLOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+
+            const glowkeyFrames = []; 
+
+            glowkeyFrames.push({
+                frame: 0,
+                value: whiteGlow
+            });
+
+            glowkeyFrames.push({
+                frame: 100,
+                value: whiteGlow
+            });
+
+            glowkeyFrames.push({
+                frame: 200,
+                value: purpleGlow
+            });
+            glowkeyFrames.push({
+                frame: 400,
+                value: purpleGlow
+            });
+            glowkeyFrames.push({
+                frame: 500,
+                value: whiteGlow
+            });
+
+            glowAnim.setKeys(glowkeyFrames);
+            purple1.animations.push(glowAnim);
+
+            scene.beginAnimation(purple1, 0, 500, true);
+            //light2.excludedMeshes.push(boxCloud);
+
+
+            //mirror.position = new BABYLON.Vector3(0, 1, 0);
+
+            //light.excludedMeshes.push(cloRack2, cloRack1, statue, dove);
+            //light2.includedOnlyMeshes.push(cloRack2, cloRack1, statue, dove);
+
+            // Shadow
+            //shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+            //shadowGenerator.getShadowMap().renderList.push(statue);
+            //shadowGenerator.setDarkness(0.5);
+            //shadowGenerator.usePoissonSampling = true;
+            //shadowGenerator.bias = 0;
+            //statue.receiveShadows = true;
+
+            var shirt1 = scene.getMeshByName("Shirt1");
+            var shirt2 = scene.getMeshByName("Shirt2");
+
+            var shirt4 = scene.getMeshByName("Shirt4");
+
+            var shirt5 = scene.getMeshByName("Shirt5");
+
+            var shirt6 = scene.getMeshByName("Shirt6");
+
+            var belovedSign = scene.getMeshByName("Curve.016");
+            belovedSign.material.emissiveColor = new BABYLON.Color3(1,1,1);
+
+            
+        
+
+            //light.excludedMeshes.push(cloRack2, cloRack1, statue, dove, shirt1, shirt2, shirt3, shirt4, shirt5, shirt6);
+            //light2.includedOnlyMeshes.push(cloRack2, cloRack1, statue, dove, shirt1, shirt2, shirt3, shirt4, shirt5, shirt6);
+            //floorMat.reflectionTexture.renderList = [statue, hatStand1, hatStand2, cloRack1, cloRack2, shirt1, shirt2, shirt3, shirt4, shirt5, shirt6];
+        });
 
     //clouds
     var boxCloud = BABYLON.Mesh.CreateSphere("boxCloud", 1000, 1000, scene);
@@ -408,8 +621,10 @@
     )
 
 
+
     light2.excludedMeshes.push(canvas2);
-    light4.includedOnlyMeshes.push(canvas2);	
+    light4.includedOnlyMeshes.push(canvas2, canvas3, canvas, canvas4, canvas5);
+    //light4.includedOnlyMeshes.push(canvas);	
 
 
 
@@ -455,25 +670,23 @@
     camera.ellipsoid = new BABYLON.Vector3(0.5, 3, 0.5);
     camera.ellipsoidOffset = new BABYLON.Vector3(0, 1, 0);
 
-    var light3 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(20, 20, 100), scene);
     // Create the "God Rays" effect (volumetric light scattering)
-	var godrays = new BABYLON.VolumetricLightScatteringPostProcess('godrays', 1.0, camera, null, 1, BABYLON.Texture.BILINEAR_SAMPLINGMODE, scene, false);
+	//var godrays = new BABYLON.VolumetricLightScatteringPostProcess('godrays', 1.0, camera, null, 1, BABYLON.Texture.BILINEAR_SAMPLINGMODE, scene, false);
 
 
-    godrays.samples = 2;
+    //godrays.samples = 2;
     // By default it uses a billboard to render the sun, just apply the desired texture
     // position and scale
-    godrays.mesh.material.diffuseTexture = new BABYLON.Texture('images/sun.png', scene, true, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
-    godrays.mesh.material.diffuseTexture.hasAlpha = true;
-    godrays.mesh.position = new BABYLON.Vector3(0, 100, 0);
-    godrays.mesh.scaling = new BABYLON.Vector3(50, 50, 50);
+    //godrays.mesh.material.diffuseTexture = new BABYLON.Texture('images/sun.png', scene, true, false, BABYLON.Texture.BILINEAR_SAMPLINGMODE);
+    //godrays.mesh.material.diffuseTexture.hasAlpha = true;
+    //godrays.mesh.position = new BABYLON.Vector3(0, 100, 0);
+    //godrays.mesh.scaling = new BABYLON.Vector3(50, 50, 50);
 
-    light3.position = godrays.mesh.position;
+    light3.position = new BABYLON.Vector3(0, 100, 0);
     light3.excludedMeshes.push(boxCloud);
 
 
 
-    
 
     //Create Visible Ellipsoid around camera
 
@@ -494,6 +707,32 @@
         button.onPointerDownObservable.add(function() {
             window.location.href = "/insideVR.html";
     });
+
+    var manager = new BABYLON.GUI.GUI3DManager(scene);
+    var anchor = new BABYLON.AbstractMesh("anchor", scene);
+    //anchor.parent = nullObj;
+    anchor.position.z = 0;
+    // add 3d buttons
+    var z = 30;
+    var z2 = 30;
+
+
+        var newButton1 = new BABYLON.GUI.HolographicButton("enter" + i);
+
+        manager.addControl(newButton1);
+
+        newButton1.linkToTransformNode(anchor);
+
+        newButton1.position = new BABYLON.Vector3(45.2, 5, -2.5);
+
+        newButton1.node.rotation.y = 1.5;
+
+        newButton1.text = "EXIT";
+        //button.imageUrl = "./textures/down.png";
+        newButton1.onPointerUpObservable.add(function(){
+            window.location.href = "/outside.html";
+        });
+        
 
 
     /* New Input Management for Camera
