@@ -156,7 +156,7 @@
     camera.direction = new BABYLON.Vector3(Math.cos(camera.angle), 0, Math.sin(camera.angle));
 
 
-    var fashionBuilding = BABYLON.SceneLoader.Append("/models/FashionStore3.4.glb", "", scene, function (scene) {
+    var fashionBuilding = BABYLON.SceneLoader.Append("/models/FashionStore4.2B.glb", "", scene, function (scene) {
         var root2 = scene.getNodeByName("__root__");
         root2.name = "fashion";
         root2.position = new BABYLON.Vector3(0,-.1,0);
@@ -196,7 +196,7 @@
         var wallbound = scene.getMeshByName("Barrier");
         var statueBound = scene.getMeshByName("hatStand2.001");
 
-        wallbound.flipFaces(true);
+        //wallbound.flipFaces(true);
 
         wallbound.visibility = 0;
         statueBound.visibility = 0;
