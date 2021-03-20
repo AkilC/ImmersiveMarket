@@ -119,6 +119,24 @@
                 right: 5px;
                 z-index: 9999999;
             }
+            .button {
+                background-color: #3269bd;
+                border: none;
+                color: white;
+                padding: 15px 32px;
+                text-align: center;
+                text-decoration: none;
+                position: absolute;
+                font-size: 16px;
+                margin: 4px 2px;
+                cursor: pointer;
+                z-index: 3000;
+                top: 87vh;  /* position the top  edge of the element at the middle of the parent */
+                left: 50vw; /* position the left edge of the element at the middle of the parent */
+                transform: translate(-50%, -50%);
+                opacity: 100% !important;
+                font-family: Arial, Helvetica, sans-serif;
+            }
         </style>
     </head>
 <body>
@@ -195,7 +213,7 @@
         light2.excludedMeshes.push(glassDoor, doorLining);
     });
 
-    var fashionBuilding = BABYLON.SceneLoader.Append("/models/FashionStore3.26.glb", "", scene, function (scene) {
+    var fashionBuilding = BABYLON.SceneLoader.Append("/models/FashionStore4.2.glb", "", scene, function (scene) {
             var root = scene.getNodeByName("__root__");
             root.name = "fashion";
 
@@ -408,7 +426,7 @@
     light2.excludedMeshes.push(boxCloud);
     boxCloud.rotation.x = 120;
 
-        //create art canvas
+        //create art canvases
 
         //create uv array to add texture to only one face
         var faceUV = new Array(6);
@@ -496,6 +514,7 @@
             x.style.opacity = "100%";
         })
     )
+
 
     var faceUV3 = new Array(6);
 
@@ -611,20 +630,131 @@
     canvas5.position = new BABYLON.Vector3(17.41, 10, 38.27);
     light.excludedMeshes.push(canvas5);
 
-    //click to toggle swipe div
-    canvas5.actionManager = new BABYLON.ActionManager(scene);
 
-    canvas5.actionManager.registerAction(
-        new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, 
-        function(event){
-            var pickedMesh = event.meshUnderPointer; 
+    var faceUV6 = new Array(6);
 
-            var x = document.getElementById("gallery-wrapper");
+    var mat6 = new BABYLON.StandardMaterial("mat", scene);
+    mat6.diffuseColor = new BABYLON.Color3(.9,.9,.9);
+    var texture6 = new BABYLON.Texture("/images/tears_for_negroes.jpg", scene);
+    mat6.diffuseTexture = texture6;
 
-            x.style.display = "block";
-            x.style.opacity = "100%";
-        })
-    )
+    //set each uv face to blank
+    for (var i = 0; i < 6; i++) {
+        faceUV6[i] = new BABYLON.Vector4(0, 0, 0, 0);
+    }
+
+    var options = {
+        width: 10,
+        height: 0.2,
+        depth: 8,
+        faceUV: faceUV6
+    };
+
+    //make face 4 equal to our artwork texture
+    faceUV6[4] = new BABYLON.Vector4(0,0,1,1);
+    var canvas6 = BABYLON.MeshBuilder.CreateBox('canvas6', options, scene);
+    canvas6.material = mat6;
+    canvas6.rotation = new BABYLON.Vector3(3.16, -1.58, 1.58);
+    canvas6.position = new BABYLON.Vector3(17.5, 10, -45.1);
+    light.excludedMeshes.push(canvas6);
+
+var faceUV7 = new Array(6);
+
+    var mat7 = new BABYLON.StandardMaterial("mat", scene);
+    mat7.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    var texture7 = new BABYLON.Texture("/images/nightcrawler.JPG", scene);
+    mat7.diffuseTexture = texture7;
+    //mat7.diffuseTexture.hasAlpha = true;
+
+    //set each uv face to blank
+    for (var i = 0; i < 6; i++) {
+        faceUV7[i] = new BABYLON.Vector4(0, 0, 0, 0);
+    }
+
+    var options = {
+        width: 10,
+        height: 0.2,
+        depth: 8,
+        faceUV: faceUV7
+    };
+
+    //make face 4 equal to our artwork texture
+    faceUV7[5] = new BABYLON.Vector4(0,0,1,1);
+    var canvas7 = BABYLON.MeshBuilder.CreateBox('canvas7', options, scene);
+    canvas7.material = mat7;
+    canvas7.rotation = new BABYLON.Vector3(3.16, -1.58, -1.58);
+    canvas7.position = new BABYLON.Vector3(-29, 10, -46);
+    light.excludedMeshes.push(canvas7);
+
+
+
+
+
+    var faceUV8 = new Array(6);
+
+    var mat8 = new BABYLON.StandardMaterial("mat", scene);
+    mat8.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    var art8 = new BABYLON.Texture("/images/before_heaven.JPG", scene);
+    mat8.diffuseTexture = art8;
+    //mat8.diffuseTexture.hasAlpha = true;
+
+    //set each uv face to blank
+    for (var i = 0; i < 6; i++) {
+        faceUV8[i] = new BABYLON.Vector4(0, 0, 0, 0);
+    }
+
+    var options = {
+        width: 10,
+        height: 0.2,
+        depth: 8,
+        faceUV: faceUV8
+    };
+
+    //make face 4 equal to our artwork texture
+    faceUV8[4] = new BABYLON.Vector4(0,0,1,1);
+    var canvas8 = BABYLON.MeshBuilder.CreateBox('canvas8', options, scene);
+    canvas8.material = mat8;
+    canvas8.rotation = new BABYLON.Vector3(0, -1.58, -1.58);
+    canvas8.position = new BABYLON.Vector3(17.41, 10, 40.27);
+    light.excludedMeshes.push(canvas8);
+    
+    
+
+    var faceUV9 = new Array(6);
+
+    var mat9 = new BABYLON.StandardMaterial("mat", scene);
+    mat9.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    var art9 = new BABYLON.Texture("/images/gangster_blues.JPG", scene);
+    mat9.diffuseTexture = art9;
+    //mat9.diffuseTexture.hasAlpha = true;
+
+    //set each uv face to blank
+    for (var i = 0; i < 6; i++) {
+        faceUV9[i] = new BABYLON.Vector4(0, 0, 0, 0);
+    }
+
+    var options = {
+        width: 10,
+        height: 0.2,
+        depth: 8,
+        faceUV: faceUV9
+    };
+
+    //make face 4 equal to our artwork texture
+    faceUV9[4] = new BABYLON.Vector4(0,0,1,1);
+    var canvas9 = BABYLON.MeshBuilder.CreateBox('canvas9', options, scene);
+    canvas9.material = mat9;
+    canvas9.rotation = new BABYLON.Vector3(0, -1.58, -1.58);
+    canvas9.position = new BABYLON.Vector3(-32, 10, 40.27);
+    light.excludedMeshes.push(canvas8, canvas9);
+
+    var light5 = new BABYLON.HemisphericLight("Light5", new BABYLON.Vector3(0,15,0), scene);
+    light5.intensity = 5;
+    light5.includedOnlyMeshes.push(canvas6, canvas7, canvas8, canvas9);
+
+
+
+
 
 
 
@@ -1036,7 +1166,7 @@
         <!-- swiper -->
 
         <div id="gallery-wrapper" class="galWrap">
-        <div id="gallery-box" onload="time()" onclick="hide()"></div>
+        <div id="gallery-box" onload="time()" onclick="hide()"> </div>
             <div class="swiper-container">
                 <div class="swiper-wrapper">
                 <div class="swiper-slide" class="noSwipingClass">Slide 1</div>
@@ -1060,6 +1190,7 @@
                 <div class="swiper-button-next"></div>
                 <div class="swiper-button-prev"></div>
             </div> 
+            <a href="#" id="button1" class="button">Add To Cart</a>
         </div>   
             <!-- Initialize Swiper -->
             <script>
