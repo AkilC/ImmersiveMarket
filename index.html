@@ -94,24 +94,9 @@
         var root = scene.getNodeByName('__root__');
         root.name = "build";
         root.parent = nullObj;
-    });
 
-    var boxCloud = BABYLON.Mesh.CreateSphere("boxCloud", 50, 1500, scene);
-    boxCloud.position = new BABYLON.Vector3(0, 0, 12);
-    var cloudMaterial = new BABYLON.StandardMaterial("cloudMat", scene);
-    var cloudProcText = new BABYLON.CloudProceduralTexture("cloud", 128, scene);
-    cloudMaterial.emissiveTexture = cloudProcText;
-    cloudMaterial.backFaceCulling = false;
-    cloudMaterial.emissiveTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-    boxCloud.material = cloudMaterial;
-
-    boxCloud.rotation.x = 120;
-
-    light.excludedMeshes.push(boxCloud);
-
-    var zvalue = 0;
+        var zvalue = 0;
     var zvalue2 = 0;
-    scene.executeWhenReady(function () {
                 var root = scene.getNodeByName("build");
                 var building = scene.getMeshByName("store.box_primitive0");
                 var name = scene.getMeshByName("store.box_primitive1");
@@ -209,7 +194,7 @@
                     collisionDetected = false;
                 }
             }
-        });
+        
 
 
             var zHuman1 = 440;
@@ -254,6 +239,23 @@
                     woman2.scaling = new BABYLON.Vector3(3, 3, 3);
                 });
             }
+
+    });
+
+    var boxCloud = BABYLON.Mesh.CreateSphere("boxCloud", 50, 1500, scene);
+    boxCloud.position = new BABYLON.Vector3(0, 0, 12);
+    var cloudMaterial = new BABYLON.StandardMaterial("cloudMat", scene);
+    var cloudProcText = new BABYLON.CloudProceduralTexture("cloud", 128, scene);
+    cloudMaterial.emissiveTexture = cloudProcText;
+    cloudMaterial.backFaceCulling = false;
+    cloudMaterial.emissiveTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+    boxCloud.material = cloudMaterial;
+
+    boxCloud.rotation.x = 120;
+
+    light.excludedMeshes.push(boxCloud);
+
+    
             //scene.executeWhenReady(function () {
             var galleryBuilding = BABYLON.SceneLoader.Append("/models/NewGallery3.3Ext.glb", "", scene, function (scene) {
                 var root1 = scene.getNodeByName("__root__");
