@@ -1,0 +1,25 @@
+<script
+    src="https://code.jquery.com/jquery-3.6.0.min.js"
+    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+    crossorigin="anonymous"></script>
+      <script src="https://js.stripe.com/v3/"></script>
+        <script>
+        var data;
+        $(document).ready(function() {
+            var sessionHost = "https://us-central1-market-checkout.cloudfunctions.net/getCheckoutSession";
+          var successUrl = "https://immersive-market.netlify.com/thankyoupage";
+          var cancelUrl = "https://immersive-market.netlify.com/art.html";
+          var url = sessionHost + '/getCheckoutSession?successUrl=' + successUrl + '&cancelUrl=' + cancelUrl;
+          console.log(url);
+          $.ajax({type: "GET", url: url, headers: {"Access-Control-Allow-Origin": "allow"}}).done(function (data) {
+              window.sessionId = data.sessionId;
+          });
+          
+          $("#button1").click(function(event) {
+              event.preventDefault();
+            var stripe = Stripe('fill');
+            stripe.redirectToCheckout({sessionId: window.sessionId})
+            .then(function (result) {});
+           });
+          });
+        </script>
