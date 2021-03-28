@@ -32,3 +32,6 @@ exports.getCheckoutSession = functions.https.onRequest(async (request, response)
     response.json({status: "success", sessionId: session.id});
   });
 });
+
+
+//copy/paste new function here, include relevant key anywhere it says "fill"
